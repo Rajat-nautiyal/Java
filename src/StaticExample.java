@@ -13,7 +13,7 @@ public class StaticExample {
     public static int getCounter() {
         return counter; // Accessing static variable
     }
-    
+
     public void displayInfo() {
         System.out.println("Name: " + name);
     }

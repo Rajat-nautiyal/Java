@@ -1,25 +1,22 @@
 package DSA.sorting;
 
 public class quicksort {
-    static void quickSort(int arr[], int low, int high) {
-        if(low<high){            
-            int pindex = partition(arr, low, high);
-            quickSort(arr, low, pindex - 1);
-            quickSort(arr, pindex +1, high);
+    public static void quickSort(int[] arr, int low, int high){
+        if(low < high){
+            int pIndex = partition(arr,low, high);
+            quickSort(arr, low, pIndex-1);
+            quickSort(arr, pIndex+1, high);
         }
-        
     }
-
-    static int partition(int arr[], int low, int high) {
+    public static int partition(int[] arr, int low, int high){
         int i = low;
         int j = high;
-        int pivot = arr[low];
-        
+        int pivot = low;
         while(i<j){
-            while(arr[i]<= pivot && i<high){
+            while(i<=high && arr[pivot]>=arr[i]){
                 i++;
             }
-            while(arr[j]> pivot && j>low){
+            while(j>=low && arr[pivot]<arr[j]){
                 j--;
             }
             if(i<j){
@@ -28,13 +25,13 @@ public class quicksort {
                 arr[j] = temp;
             }
         }
-        int tempone = arr[low];
+        int temp1 = arr[low];
         arr[low] = arr[j];
-        arr[j] = tempone;
+        arr[j] = temp1;
         return j;
     }
     public static void main(String args[]){
-        int[] arr = {4,6,8,5,1,2};
+        int[] arr = {4,6,2,5,7,1,3,-1};
         int n = arr.length;
         quickSort(arr, 0, n-1);
         for(int i =0; i<n; i++){

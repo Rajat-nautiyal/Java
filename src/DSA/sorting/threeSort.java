@@ -11,7 +11,7 @@ public class threeSort {
                     min = j; //finding the minimum index in array loop
                 }
             }
-            int temp = arr[i];     //swapping        
+            int temp = arr[i];//swapping
             arr[i] = arr[min];
             arr[min] = temp;
         }
@@ -22,12 +22,12 @@ public class threeSort {
     }
     
     public static void bubble_sort(int[] arr, int n){
-        for(int i = n -1; i>=0; i--){
-            for(int j =0; j < i; j++){
+        for(int i = n-1; i>=0; i--){
+            for(int j = 0; j < i; j++){
                 if(arr[j]>arr[j+1]){
-                    int temp = arr[j];     //swapping        
-                    arr[j] = arr[j+1];
-                    arr[j+1] = temp;        
+                    int temp = arr[j+1];
+                    arr[j+1] = arr[j];
+                    arr[j] = temp;
                 }
             }
         }
@@ -55,7 +55,8 @@ public class threeSort {
     public static void main(String args[]){
         int[] arr = {13,46,24,52,20,9};
         int n = arr.length;
-        // selection_sort(arr, n);
-        insertion_sort(arr,n);
+        // bubble_sort(arr, n);
+        selection_sort(arr, n);
+        // insertion_sort(arr,n);
     }
 }
