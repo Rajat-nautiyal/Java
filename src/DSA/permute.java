@@ -38,6 +38,7 @@ public abstract class permute {
                 ds.add(m);
             }
             list.add(new ArrayList<>(ds));
+            return;
         }
         for (int i = index; i < nums.length; i++) {
             swap(i, index, nums);
