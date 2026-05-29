@@ -1,0 +1,56 @@
+ class Pair{
+    TreeNode node;
+    int num;
+    Pair(TreeNode node, int num){
+        this.node = node;
+        this.num = num;
+    }
+ }
+class Solution {
+    public List<Integer> inorderTraversal(TreeNode root) {
+        if(root == null) return new ArrayList<>();
+
+        //Recursion App(very opt)
+        ans.addAll(inorderTraversal(root.left));
+        ans.add(root.val);
+        ans.addAll(inorderTraversal(root.right));
+
+
+        //1 Stack my App
+        Stack<Pair> st = new Stack<>();
+        st.push(new Pair(root, 1));
+        ArrayList<Integer> ans = new ArrayList<>();
+
+        while(!st.empty()){
+            Pair p = st.pop();
+            if(p.num == 1){
+                st.push(new Pair(p.node, 2));
+                if(p.node.left != null){
+                    st.push(new Pair(p.node.left, 1));
+                }
+            }else{
+                ans.add(p.node.val);
+                if(p.node.right != null){
+                    st.push(new Pair(p.node.right, 1));
+                }
+            }
+        }
+
+        //1Stack Striver App
+        Stack<TreeNode> st = new Stack<>();
+        TreeNode node = root;
+        while(true){
+            if(node != null){
+                st.push(node);
+                node = node.left;
+            }else{
+                if(st.isEmpty()) break;
+                node = st.pop();
+                ans.add(node.val);
+                node = node.right;
+            }
+        }
+        
+        return ans;
+    }
+}
