@@ -1,0 +1,36 @@
+class Solution {
+
+    //My Approach(Optimised)
+    public int rec(TreeNode node, int height){
+        if(node == null) return height - 1;
+        
+        int left = rec(node.left, height+1);
+        if(left == -1) return -1;
+        left = Math.max(left, height);
+
+        int right = rec(node.right, height+1);
+        if(right == -1) return -1;
+        right = Math.max(right, height);
+
+        if(Math.abs(left - right) > 1) return -1;
+
+        return Math.max(left, right);
+    }
+
+    //Striver Approach(Optimised)
+    public int rec(TreeNode root){
+        if(root == null) return 0;
+        int left = rec(root.left);
+        int right = rec(root.right);
+        if(left == -1 || right == -1) return -1;
+        if (Math.abs(left - right) > 1) return -1;
+        return Math.max(left,right) + 1;
+    }
+
+    public boolean isBalanced(TreeNode root) {
+        if(root == null) return true;
+        return rec(root, 0) != -1;
+
+        return rec(root) != -1;
+    }
+}
