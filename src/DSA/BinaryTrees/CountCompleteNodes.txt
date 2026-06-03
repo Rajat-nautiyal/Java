@@ -1,0 +1,53 @@
+222. Count Complete Tree Nodes
+
+//brute approach - level order traversal or recursion
+class Solution {
+    public int helper(TreeNode node , int cnt){
+        if(node == null) return cnt-1;
+        
+        int l = helper(node.left, cnt+1);
+        int r = helper(node.right, l+1);
+
+        return Math.max(l,r);
+    }
+    public int countNodes(TreeNode root) {
+        if(root == null) return 0;
+        return helper(root, 1);
+    }
+}
+
+//Optimised approach :- Recursion TC-O(logn * logn)
+class Solution {
+    public int findLeftHeight(TreeNode node){
+        if(node == null) return 0;
+        int cnt = 0;
+        while(node.left != null){
+            cnt++;
+            node = node.left;
+        }
+        return cnt;
+    }
+    public int findRightHeight(TreeNode node){
+        if(node == null) return 0;
+        int cnt = 0;
+        while(node.right != null){
+            cnt++;
+            node = node.right;
+        }
+        return cnt;
+    }
+    public int helper(TreeNode node){
+        if(node == null) return 0;
+
+        int l = findLeftHeight(node);
+        int r = findRightHeight(node);
+
+        if(l == r) return (2 << l) - 1;
+        else{
+            return helper(node.left) + helper(node.right) + 1;
+        }
+    }
+    public int countNodes(TreeNode root) {
+        return helper(root);
+    }
+}
