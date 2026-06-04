@@ -1,0 +1,24 @@
+106. Construct Binary Tree from Inorder and Postorder Traversal
+
+class Solution {
+    public TreeNode helper(int[] postorder, int pstart, int plast, int[] inorder, int instart, int inlast, HashMap<Integer, Integer> mp){
+        if(pstart < plast || instart > inlast) return null;
+
+        TreeNode root = new TreeNode(postorder[pstart]);
+
+        int rootin = mp.get(postorder[pstart]);
+        int numRight = inlast - rootin;
+
+        root.right = helper(postorder, pstart-1, pstart-numRight, inorder, rootin+ 1, inlast, mp);
+        root.left = helper(postorder, pstart-numRight-1, plast, inorder, instart, rootin-1, mp);
+        
+        return root;
+    }
+    public TreeNode buildTree(int[] inorder, int[] postorder) {
+        HashMap<Integer, Integer> mp = new HashMap<>();
+        for(int i = 0; i < postorder.length; i++){
+            mp.put(inorder[i], i);
+        }
+        return helper(postorder, postorder.length-1, 0, inorder, 0, inorder.length - 1, mp);
+    }
+}

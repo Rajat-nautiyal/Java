@@ -1,0 +1,62 @@
+297. Serialize and Deserialize Binary Tree
+
+public class Codec {
+
+    // Encodes a tree to a single string.
+    public String serialize(TreeNode root) {
+        if (root == null)
+            return "";
+        Queue<TreeNode> q = new LinkedList<>();
+        StringBuilder s = new StringBuilder();
+        q.offer(root);
+        s.append(root.val + ",");
+        while (!q.isEmpty()) {
+            int n = q.size();
+            for (int i = 0; i < n; i++) {
+                TreeNode node = q.poll();
+                if (node.left != null) {
+                    q.offer(node.left);
+                    s.append(node.left.val + ",");
+                } else if (node.left == null) {
+                    s.append("*" + ",");
+                }
+                if (node.right != null) {
+                    q.offer(node.right);
+                    s.append(node.right.val + ",");
+                } else if (node.right == null) {
+                    s.append("*" + ",");
+                }
+            }
+        }
+        s.deleteCharAt(s.length() - 1);
+        return s.toString();
+    }
+
+    // Decodes your encoded data to tree.
+    public TreeNode deserialize(String data) {
+        if (data.length() == 0)
+            return null;
+        Queue<TreeNode> q = new LinkedList<>();
+        String[] values = data.split(",");
+        TreeNode root = new TreeNode(Integer.parseInt(values[0]));
+        q.offer(root);
+        int j = 1;
+        while (!q.isEmpty() && j < values.length) {
+            int n = q.size();
+            for (int i = 0; i < n; i++) {
+                TreeNode node = q.poll();
+                if (!values[j].equals("*")) {
+                    node.left = new TreeNode(Integer.parseInt(values[j]));
+                    q.offer(node.left);
+                }
+                j++;
+                if (!values[j].equals("*")) {
+                    node.right = new TreeNode(Integer.parseInt(values[j]));
+                    q.offer(node.right);
+                }
+                j++;
+            }
+        }
+        return root;
+    }
+}
