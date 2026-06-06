@@ -1,0 +1,57 @@
+114. Flatten Binary Tree to Linked List
+
+//Brute Approach:- TC-O(2N) SC-O(2N)
+class Solution {
+    public void helper(TreeNode node, ArrayList<Integer> ans){
+        if(node == null) return;
+        ans.add(node.val);
+        helper(node.left, ans);
+        helper(node.right, ans);
+    }
+    public void flatten(TreeNode root) {
+        ArrayList<Integer> ans = new ArrayList<>();
+        helper(root, ans);
+        TreeNode node = root;
+        for(int i = 1; i < ans.size(); i++){
+            TreeNode p = new TreeNode(ans.get(i));
+            node.left = null;
+            node.right = p;
+            node = node.right;
+        }
+    }
+}
+//Better Approach DFS method
+class Solution {
+    TreeNode head = null;
+    public void dfs(TreeNode node){
+        if(node == null) return;
+        dfs(node.right);
+        dfs(node.left);
+        node.left = null;
+        node.right = head;
+        head = node;
+    }
+    public void flatten(TreeNode root) {
+        dfs(root);
+    }
+}
+
+
+//Optmised:- Morris Traversal method
+
+class Solution {
+    public void flatten(TreeNode root) {
+        TreeNode curr = root;
+        while(curr != null){
+            if(curr.left != null){
+                TreeNode prev = curr.left;
+                while(prev.right != null){
+                    prev = prev.right;
+                }
+                prev.right = curr.right;
+                curr.right = curr.left;
+                curr.left = null;
+            }else curr = curr.right;
+        }
+    }
+}

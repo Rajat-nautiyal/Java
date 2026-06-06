@@ -1,0 +1,26 @@
+700. Search in a Binary Search Tree
+//rec app
+class Solution {
+    public TreeNode helper(TreeNode node, int val){
+        if(node == null) return null;
+
+        if(node.val == val) return node;
+
+        if(val  < node.val) node = helper(node.left, val);
+        else node = helper(node.right, val);
+        return node;
+    }
+    public TreeNode searchBST(TreeNode root, int val) {
+        return helper(root, val);
+    }
+}
+
+//Another iterative app
+class Solution {
+    public TreeNode searchBST(TreeNode root, int val) {
+        while(root != null && root.val != val){
+            root = root.val < val? root.right : root.left;
+        }
+        return root;
+    }
+}

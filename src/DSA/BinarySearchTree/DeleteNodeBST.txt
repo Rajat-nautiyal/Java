@@ -1,0 +1,45 @@
+450. Delete Node in a BST
+
+class Solution {
+    public TreeNode findRightMost(TreeNode node){
+        while(node.right != null){
+            node = node.right;
+        }
+        return node;
+    }
+    public TreeNode helper(TreeNode node){
+        if(node.left == null) return node.right;
+        if(node.right == null) return node.left;
+
+        TreeNode rightChild = node.right;
+        TreeNode leftRightMostChild = findRightMost(node.left);
+        leftRightMostChild.right = rightChild;
+
+        return node.left;
+    }
+    public TreeNode deleteNode(TreeNode root, int key) {
+        if(root == null) return null;
+        TreeNode node = root;
+        TreeNode prev = null;
+        if(root.val == key){
+            return helper(root);
+        }
+        while(node != null){
+            if(node.val == key) break;
+            if(node.val < key){
+                prev = node;
+                node = node.right;
+            }else{
+                prev = node;
+                node = node.left;
+            }
+        }
+
+        if(prev.left != null && prev.left.val == key){
+            prev.left = helper(node);
+        }else if(prev.right != null && prev.right.val == key){
+            prev.right = helper(node);
+        }
+        return root;
+    }
+}
