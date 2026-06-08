@@ -1,0 +1,53 @@
+//brute app -> store all nodes in a list and sort it TC- nlogn SC- n
+
+//Approach:- Inorder Traversal of BST gives sorted values
+
+//better approach(inorder recursion) TC- n SC- n
+class Solution {
+    public void inorder(TreeNode root,int k, int[] kcnt, int[] ans){
+        if(root == null) return;
+        inorder(root.left, k, kcnt, ans);
+        kcnt[0]++;
+        if(kcnt[0] == k){
+            ans[0] = root.val;
+        };
+        inorder(root.right, k, kcnt, ans);
+    }
+    public int kthSmallest(TreeNode root, int k) {
+        int[] ans = {0};
+        int[] kcnt = {0};
+        inorder(root, k, kcnt, ans);
+        return ans[0];
+        
+    }
+}
+
+//Optimised Approach:- Moris Inorder Traversal TC- n SC- 1
+class Solution {
+    public int kthSmallest(TreeNode root, int k) {
+        TreeNode curr = root;
+        int kcnt = 0;
+        while(curr != null){
+            if(curr.left == null){
+                kcnt++;
+                if(kcnt == k) return curr.val;
+                curr = curr.right;
+            }else{
+                TreeNode prev = curr.left;
+                while(prev.right != null && prev.right != curr){
+                    prev = prev.right;
+                }
+                if(prev.right == null){
+                    prev.right = curr;
+                    curr = curr.left;
+                }else{
+                    kcnt++;
+                    if(kcnt == k) return curr.val;
+                    curr = curr.right;
+                    prev.right = null;
+                }
+            }
+        }
+        return -1;
+    }
+}
