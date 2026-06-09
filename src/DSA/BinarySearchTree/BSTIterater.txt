@@ -1,0 +1,28 @@
+173. Binary Search Tree Iterator
+//brute: just use List to store all inorder elements using morris traversal;
+
+//Opt app: TC -O(n) sc - O(h)
+class BSTIterator {
+    Stack<TreeNode> st;
+    public BSTIterator(TreeNode root) {
+        st = new Stack<>();        
+        pushLeft(root);
+    }
+    public void pushLeft(TreeNode curr){
+        while(curr != null){
+            st.push(curr);
+            curr = curr.left;
+        }
+    }
+    
+    public int next() { TC -O(h) sc - O(h)
+        TreeNode node = st.pop();
+        if(node.right != null) pushLeft(node.right);
+        return node.val;
+    }
+    
+    public boolean hasNext() { TC -O(1) sc - O(1)
+        if(st.isEmpty()) return false;
+        return true;
+    }
+}

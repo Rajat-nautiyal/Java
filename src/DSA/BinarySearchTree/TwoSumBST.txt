@@ -1,0 +1,82 @@
+653. Two Sum IV - Input is a BST
+
+-->Better Approach: TC -O(N+N) SC - O(N+N);
+class Solution {
+    public void inorder(TreeNode node, List<Integer> ans){
+        if(node == null) return;
+        inorder(node.left, ans);
+        ans.add(node.val);
+        inorder(node.right, ans);
+    }
+    public boolean findTarget(TreeNode root, int k) {
+        List<Integer> ls = new ArrayList<>();
+        inorder(root, ls);
+        if(ls.size() == 1) return false;
+
+        int i = 0;
+        int j = ls.size() - 1;
+        while(i < j){
+            int sum = ls.get(i) + ls.get(j);
+            if(sum == k) return true;
+            if(k < sum) j--;
+            if(k > sum) i++;
+        }
+
+        return false;
+    }
+}
+
+-->Optimised Approach: Similar to BST Iterator, TC -O(N) SC - O(H);
+
+class BSTIterator {
+    Stack<TreeNode> st = new Stack<>();
+    Boolean reverse;
+
+    public BSTIterator(TreeNode root, Boolean isReverse) {
+        reverse = isReverse;
+        pushAll(root);
+    }
+
+    public void pushAll(TreeNode node) {
+        TreeNode curr = node;
+        while (curr != null) {
+            st.push(curr);
+            if (reverse) {
+                curr = curr.right;
+            } else
+                curr = curr.left;
+        }
+    }
+
+    public int next() {
+        TreeNode curr = st.pop();
+        if (reverse)
+            pushAll(curr.left);
+        else
+            pushAll(curr.right);
+        return curr.val;
+    }
+
+    public Boolean hasNext() {
+        return !st.isEmpty();
+    }
+}
+
+class Solution {
+    public boolean findTarget(TreeNode root, int k) {
+        BSTIterator l = new BSTIterator(root, false);
+        BSTIterator r = new BSTIterator(root, true);
+
+        int i = l.next();
+        int j = r.next();
+
+        while (i < j) {
+            int sum = i + j;
+            if (sum == k) return true;
+            if (sum > k) j = r.next();
+            if (sum < k) i = l.next();
+        }
+        return false;
+
+    }
+}
