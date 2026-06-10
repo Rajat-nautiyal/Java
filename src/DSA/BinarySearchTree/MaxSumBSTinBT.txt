@@ -1,0 +1,36 @@
+1373. Maximum Sum BST in Binary Tree
+
+-->Optimised Approach:- TC- O(N) SC-O(N);
+
+NOTE:- //For negative nodes just return 0
+class BSTNode{
+    int minNode;
+    int maxNode;
+    int sum;
+    BSTNode(int minNode, int maxNode, int sum){
+        this.minNode = minNode;
+        this.maxNode = maxNode;
+        this.sum = sum;
+    }
+}
+class Solution {
+    public BSTNode validBSTsize(TreeNode node, int[] maxSum){
+        if(node == null){
+            return new BSTNode(Integer.MAX_VALUE, Integer.MIN_VALUE, 0);
+        }
+        BSTNode l = validBSTsize(node.left, maxSum);
+        BSTNode r = validBSTsize(node.right, maxSum);
+
+        if(l.maxNode < node.val && node.val < r.minNode){
+            maxSum[0] = Math.max(maxSum[0], l.sum + r.sum + node.val);
+            return new BSTNode(Math.min(l.minNode, node.val), Math.max(r.maxNode, node.val),l.sum + r.sum + node.val);
+        }else{
+            return new BSTNode(Integer.MIN_VALUE, Integer.MAX_VALUE, Math.max(l.sum,Math.max(0,r.sum)));
+        }
+    }
+    public int maxSumBST(TreeNode root) {
+        int[] maxSum = {0};
+        BSTNode node = validBSTsize(root, maxSum);
+        return maxSum[0];
+    }
+}
