@@ -1,0 +1,73 @@
+733. Flood Fill
+
+//BFS Approach
+class Pair {
+    int row;
+    int col;
+
+    Pair(int row, int col) {
+        this.row = row;
+        this.col = col;
+    }
+}
+
+class Solution {
+    public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+        int n = image.length;
+        int m = image[0].length;
+        Queue<Pair> q = new LinkedList<>();
+        int c = image[sr][sc];
+        if (c == color) {
+            return image;
+        }
+        q.offer(new Pair(sr, sc));
+        image[sr][sc] = color;
+        int[] dir = { 0, 1, 0, -1, 0 };
+        while (!q.isEmpty()) {
+            Pair p = q.poll();
+            for (int i = 0; i < 4; i++) {
+                int row = p.row + dir[i];
+                int col = p.col + dir[i + 1];
+
+                if (row < n && row >= 0 && col < m && col >= 0 && image[row][col] == c) {
+                    image[row][col] = color;
+                    q.offer(new Pair(row, col));
+                }
+            }
+        }
+        return image;
+    }
+}
+
+
+//Optimised Approach:- //DFS Approach TC:- O(N*M) SC O(N*M)
+
+class Solution {
+    public void dfs(int[][] image, int[] dir, int color, int originalColor, int row, int col) {
+        if (row >= image.length || row < 0 || col < 0 || col >= image[0].length)
+            return;
+
+        image[row][col] = color;
+        
+        for (int i = 0; i < 4; i++) {
+            int nrow = row + dir[i];
+            int ncol = col + dir[i + 1];
+            if (nrow < image.length && nrow >= 0 && ncol < image[0].length && ncol >= 0 && image[nrow][ncol] == originalColor) {
+                image[nrow][ncol] = color;
+                dfs(image, dir, color, originalColor, nrow, ncol);
+            }
+        }
+    }
+
+    public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+        int n = image.length;
+        int m = image[0].length;
+        int originalColor = image[sr][sc];
+        if (originalColor == color) {
+            return image;
+        }
+        int[] dir = { 0, 1, 0, -1, 0 };
+        dfs(image, dir, color, originalColor, sr, sc);
+        return image;
+    }
+}

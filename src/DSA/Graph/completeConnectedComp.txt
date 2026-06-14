@@ -1,0 +1,101 @@
+2685. Count the Number of Complete Components
+
+Brute - //BFS Approach / dfs
+class Solution {
+    public int countCompleteComponents(int n, int[][] edges) {
+        int ans = 0;
+        List<Set<Integer>> ls = new ArrayList<>();
+        boolean[] vis = new boolean[n];
+        int totnodes = 0;
+        for (int i = 0; i < n; i++) {
+            ls.add(new HashSet<>());
+        }
+
+        for (int i = 0; i < edges.length; i++) {
+            int u = edges[i][1];
+            int v = edges[i][0];
+            ls.get(u).add(v);
+            ls.get(v).add(u);
+        }
+        for (int i = 0; i < n; i++) {
+            if (!vis[i]) {
+                Queue<Integer> q = new LinkedList<>();
+                ArrayList<Integer> components = new ArrayList<>();
+                components.add(i);
+                q.offer(i);
+                vis[i] = true;
+                while (!q.isEmpty()) {
+                    int el = q.poll();
+                    for (int ver : ls.get(el)) {
+                        if (!vis[ver]) {
+                            q.offer(ver);
+                            vis[ver] = true;
+                            components.add(ver);
+                        }
+                    }
+                }
+                if (isCompleteConnected(components, ls)) {
+                    ans++;
+                }
+            }
+        }
+        return ans;
+    }
+
+    public boolean isCompleteConnected(ArrayList<Integer> components, List<Set<Integer>> ls) {
+        int size = components.size();
+        if (size <= 1)
+            return true;
+
+        for (int i = 0; i < size; i++) {
+            int node = components.get(i);
+
+            if (ls.get(node).size() != size - 1) {
+                return false;
+            }
+        }
+        return true;
+
+    }
+}
+
+//Optimised Approach:- DFS + Math eq.
+class Solution {
+    public int countCompleteComponents(int n, int[][] edges) {
+        int ans = 0;
+        List<List<Integer>> ls = new ArrayList<>();
+        boolean[] vis = new boolean[n];
+        int totnodes = 0;
+        for (int i = 0; i < n; i++) {
+            ls.add(new ArrayList<>());
+        }
+
+        for (int[] e: edges) {
+            int u = e[1];
+            int v = e[0];
+            ls.get(u).add(v);
+            ls.get(v).add(u);
+        }
+        for (int i = 0; i < n; i++) {
+            if (!vis[i]) {
+                int[] cnt = new int[2];  //cnt[0] -> node cnt ,cnt[1] -> edge cnt;
+                dfs(i, vis, cnt, ls);
+                if (cnt[1] == cnt[0] * (cnt[0] - 1)) {
+                    ans++;
+                }
+            }
+        }
+        return ans;
+    }
+
+    public void dfs(int node, boolean[] vis, int[] cnt, List<List<Integer>> ls) {
+        vis[node] = true;
+        cnt[0]++;
+        cnt[1] += ls.get(node).size();
+        for (int nb : ls.get(node)) {
+            if (!vis[nb]) {
+                dfs(nb, vis, cnt, ls);
+            }
+        }
+    }
+}
