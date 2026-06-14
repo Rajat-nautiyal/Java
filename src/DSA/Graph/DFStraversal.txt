@@ -1,0 +1,21 @@
+TC- O(N + 2E) SC - O(3N)
+class Solution {
+    public void helper(int start, boolean[] vis,ArrayList<Integer> ans, ArrayList<ArrayList<Integer>> adj){
+        for(int nb : adj.get(start)){
+            if(!vis[nb]){
+                ans.add(nb);
+                vis[nb] = true;
+                helper(nb, vis, ans, adj);
+            }
+        }
+    }
+    public ArrayList<Integer> dfs(ArrayList<ArrayList<Integer>> adj) {
+        // code here
+        boolean[] vis = new boolean[adj.size()];
+        ArrayList<Integer> ans = new ArrayList<>();
+        ans.add(0);
+        vis[0] = true;
+        helper(0, vis, ans, adj);
+        return ans;
+    }
+}
