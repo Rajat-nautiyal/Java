@@ -1,0 +1,47 @@
+Q. Cycle Detection in Undirected Graph
+
+//BFS Approach:- TC - O(N + 2E) SC - O(N)
+class Pair{
+    int node;
+    int parent;
+    
+    Pair(int node, int parent){
+        this.node = node;
+        this.parent = parent;
+    }
+}
+class Solution {
+    public boolean isCycle(int V, int[][] edges) {
+        List<List<Integer>> adj = new ArrayList<>();
+        boolean[] vis = new boolean[V];
+
+        for (int i = 0; i < V; i++) {
+            adj.add(new ArrayList<>());
+        }
+        
+        for(int[] e: edges){
+            adj.get(e[0]).add(e[1]);
+            adj.get(e[1]).add(e[0]);
+        }
+        
+        for(int i = 0; i < V; i++){
+            if(!vis[i]){
+                Queue<Pair> q = new LinkedList<>();
+                q.offer(new Pair(i, -1));
+                vis[i] = true;
+                while(!q.isEmpty()){
+                    Pair p = q.poll();
+                    int node = p.node;
+                    int parent = p.parent;
+                    for(int nb: adj.get(node)){
+                        if(!vis[nb]){
+                            q.offer(new Pair(nb,node));
+                            vis[nb] = true;
+                        }else if(nb != parent) return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+}

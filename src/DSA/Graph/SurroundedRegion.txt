@@ -1,0 +1,110 @@
+130. Surrounded Regions
+
+//1 - BFS Approach :- TC - O(N*M) SC - O(N*M)
+class Pair{
+    int row;
+    int col;
+    Pair(int row, int col){
+        this.row = row;
+        this.col = col;
+    }
+}
+
+class Solution {
+    public void solve(char[][] board) {
+        int n = board.length;
+        int m = board[0].length;
+        Queue<Pair> q = new LinkedList<>();
+        boolean[][] vis = new boolean[n][m];
+
+        for(int i = 0; i < n; i++){
+            if(board[i][0] == 'O'){
+                q.offer(new Pair(i,0));
+                vis[i][0] = true;
+            }
+            if(board[i][m-1] == 'O'){
+                q.offer(new Pair(i,m-1));
+                vis[i][m-1] = true;
+            }
+        }
+        for(int j = 0; j < m; j++){
+            if(board[0][j] == 'O'){
+                q.offer(new Pair(0, j));
+                vis[0][j] = true;
+            }
+            if(board[n-1][j] == 'O'){
+                q.offer(new Pair(n-1, j));
+                vis[n-1][j] = true;
+            }
+        }
+        int[] rowDir = {-1, 0, 1, 0};
+        int[] colDir = {0, 1, 0, -1};
+        while(!q.isEmpty()){
+            Pair p = q.poll();
+            for(int i = 0; i < 4; i++){
+                int r = p.row + rowDir[i];
+                int c = p.col + colDir[i];
+                if(r < n && c < m && c >= 0 && r >= 0 && board[r][c] == 'O' && !vis[r][c]){
+                    vis[r][c] = true;
+                    q.offer(new Pair(r,c));
+                }
+            }
+        }
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                if(!vis[i][j]){
+                    board[i][j] = 'X';
+                }
+            }
+        }
+    }
+}
+
+//2 - DFS Approach :- TC - O(N*M) SC - O(N*M)
+class Solution {
+    public void dfs(int row, int col, char[][] board, boolean[][] vis, int[] dir) {
+        vis[row][col] = true;
+        for (int i = 0; i < 4; i++) {
+            int r = row + dir[i];
+            int c = col + dir[i+1];
+            if (r < board.length && c < board[0].length && c >= 0 && r >= 0 && board[r][c] == 'O' && !vis[r][c]) {
+                dfs(r, c, board, vis, dir);
+            }
+        }
+    }
+    public void solve(char[][] board) {
+        int n = board.length;
+        int m = board[0].length;
+        boolean[][] vis = new boolean[n][m];
+        int[] dir = { 0, -1, 0, 1, 0 };
+
+        //Traverse row boundary
+        for (int i = 0; i < n; i++) {
+            if (board[i][0] == 'O') {
+                dfs(i, 0, board, vis, dir);
+            }
+            if (board[i][m - 1] == 'O') {
+                dfs(i, m - 1, board, vis, dir);
+            }
+        }
+        
+        //Traverse column boundary
+        for (int j = 0; j < m; j++) {
+            if (board[0][j] == 'O') {
+                dfs(0, j, board, vis, dir);
+            }
+            if (board[n - 1][j] == 'O') {
+                dfs(n - 1, j, board, vis, dir);
+            }
+        }
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (!vis[i][j]) {
+                    board[i][j] = 'X';
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,45 @@
+127. Word Ladder
+
+//BFS Approach:- TC - O(N*W*26) SC - O(2N);
+class Pair{
+    String word;
+    int steps;
+
+    Pair(String word, int steps){
+        this.word = word;
+        this.steps = steps;
+    }
+}
+class Solution {
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        Queue<Pair> q = new LinkedList<>();
+        HashSet<String> st = new HashSet<>();
+        q.offer(new Pair(beginWord, 1));
+        
+        for(String s: wordList){
+            st.add(s);
+        }
+
+        while(!q.isEmpty()){
+            Pair p = q.poll();
+            String word = p.word;
+            int steps = p.steps;
+
+            if(word.equals(endWord)) return steps;
+            
+            for(int i = 0; i < word.length(); i++){
+                char[] arr = word.toCharArray();
+                char original = arr[i];
+                for(char ch = 'a'; ch <= 'z'; ch++){
+                    arr[i] = ch;
+                    String newWord = new String(arr);
+                    if(st.contains(newWord)){
+                        q.offer(new Pair(newWord, steps+1));
+                        st.remove(newWord);
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+}

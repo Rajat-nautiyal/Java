@@ -1,0 +1,116 @@
+1020. Number of Enclaves
+
+//1 - BFS Approach :- TC - O(N*M) SC - O(N*M)
+class Pair{
+    int row;
+    int col;
+    Pair(int row, int col){
+        this.row = row;
+        this.col = col;
+    }
+}
+class Solution {
+    public int numEnclaves(int[][] grid) {
+        int n = grid.length;
+        int m = grid[0].length;
+        Queue<Pair> q = new LinkedList<>();
+        boolean[][] vis = new boolean[n][m];
+        int ans = 0;
+        
+        for(int i = 0; i < n; i++){
+            if(grid[i][0] == 1){
+                q.offer(new Pair(i,0));
+                vis[i][0] = true;
+            }
+            if(grid[i][m-1] == 1){
+                q.offer(new Pair(i,m-1));
+                vis[i][m-1] = true;
+            }
+        }
+        for(int j = 0; j < m; j++){
+            if(grid[0][j] == 1){
+                q.offer(new Pair(0, j));
+                vis[0][j] = true;
+            }
+            if(grid[n-1][j] == 1){
+                q.offer(new Pair(n-1, j));
+                vis[n-1][j] = true;
+            }
+        }
+        int[] rowDir = {-1, 0, 1, 0};
+        int[] colDir = {0, 1, 0, -1};
+        while(!q.isEmpty()){
+            Pair p = q.poll();
+            for(int i = 0; i < 4; i++){
+                int r = p.row + rowDir[i];
+                int c = p.col + colDir[i];
+                if(r < n && c < m && c >= 0 && r >= 0 && grid[r][c] == 1 && !vis[r][c]){
+                    vis[r][c] = true;
+                    q.offer(new Pair(r,c));
+                }
+            }
+        }
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                if(grid[i][j] == 1 && !vis[i][j]){
+                    ans++;
+                }
+            }
+        }
+        return ans;
+    }
+}
+
+
+//2 - DFS Approach :- TC - O(N*M) SC - O(N*M)
+
+class Solution {
+    public void dfs(int row, int col, int[][] grid, boolean[][] vis, int[] dir) {
+        vis[row][col] = true;
+        for (int i = 0; i < 4; i++) {
+            int r = row + dir[i];
+            int c = col + dir[i+1];
+            if (r < grid.length && c < grid[0].length && c >= 0 && r >= 0 && grid[r][c] == 1 && !vis[r][c]) {
+                dfs(r, c, grid, vis, dir);
+            }
+        }
+    }
+    public int numEnclaves(int[][] grid) {
+        int n = grid.length;
+        int m = grid[0].length;
+        Queue<Pair> q = new LinkedList<>();
+        boolean[][] vis = new boolean[n][m];
+        int ans = 0;
+        int[] dir = { 0, -1, 0, 1, 0 };
+
+        //Traverse row boundary
+        for (int i = 0; i < n; i++) {
+            if (grid[i][0] == 1) {
+                dfs(i, 0, grid, vis, dir);
+            }
+            if (grid[i][m - 1] == 1) {
+                dfs(i, m - 1, grid, vis, dir);
+            }
+        }
+        
+        //Traverse column boundary
+        for (int j = 0; j < m; j++) {
+            if (grid[0][j] == 1) {
+                dfs(0, j, grid, vis, dir);
+            }
+            if (grid[n - 1][j] == 1) {
+                dfs(n - 1, j, grid, vis, dir);
+            }
+        }
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                if(grid[i][j] == 1 && !vis[i][j]){
+                    ans++;
+                }
+            }
+        }
+        return ans;
+    }
+}
