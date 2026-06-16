@@ -1,0 +1,41 @@
+28. Find the Index of the First Occurrence in a String
+
+//KMP algo TC:- O(N+M) SC:-O(N), SHORT TIP:- practice how to make lps array
+class Solution {
+    public int strStr(String haystack, String needle) {
+        int[] lps = new int[needle.length()];
+        createLPS(needle, lps);
+        int i = 0;
+        int j = 0;
+        while(i < haystack.length() && j < needle.length()){
+            if(haystack.charAt(i) == needle.charAt(j)){
+                i++;
+                j++;
+                if(j == needle.length()) return i - j;
+            }else{
+                if(j > 0) j = lps[j-1];
+                else i++;
+            }
+        }
+        return -1;
+    }
+
+//create lps match array
+    public void createLPS(String pattern, int[] lps){
+        int i = 0;
+        int j = 1;
+        
+        while(j < pattern.length()){
+            if(pattern.charAt(i) == pattern.charAt(j)){
+                lps[j] = ++i;
+                j++;
+            }else{
+                if(i > 0) i = lps[i-1];
+                else{
+                    lps[j] = 0;
+                    j++;
+                }
+            }
+        }
+    }
+}

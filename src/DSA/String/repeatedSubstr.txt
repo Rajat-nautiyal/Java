@@ -1,0 +1,28 @@
+459. Repeated Substring Pattern
+
+class Solution {
+    public boolean repeatedSubstringPattern(String s) {
+        int[] lps = new int[s.length()];
+        int n = s.length();
+        createLPS(s,lps);
+
+        if(lps[n-1] != 0){
+            int substrlen = n - lps[n-1];
+            if(n % substrlen == 0) return true;
+        }
+        return false;
+    }
+    public void createLPS(String pat,int[] lps){
+        int len = 0;
+        int i = 1;
+        while(i < pat.length()){
+            if(pat.charAt(i) == pat.charAt(len)){
+                lps[i++] = ++len;
+            }else if(len > 0){
+                len = lps[len-1];
+            }else{
+                lps[i++] = 0;
+            }
+        }
+    }
+}
