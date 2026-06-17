@@ -1,0 +1,82 @@
+126. Word Ladder II
+
+//BFS + DFS Approach :- TC :- O(N × L × 26 + S × L)  (N = words, L = path length, S = number of shortest sequences).
+//SC :- N*M + N*M + (N*M + E) + L(dfs) -> E is adj list of parent map
+
+class Solution {
+    public List<List<String>> findLadders(String beginWord,
+            String endWord,
+            List<String> wordList) {
+
+        Set<String> dict = new HashSet<>(wordList);
+        List<List<String>> ans = new ArrayList<>();
+
+        if (!dict.contains(endWord))
+            return ans;
+
+        HashMap<String, List<String>> parent = new HashMap<>();@
+        HashMap<String, Integer> level = new HashMap<>();
+
+        Queue<String> q = new LinkedList<>();
+        q.offer(beginWord);
+
+        level.put(beginWord, 0);
+
+        while (!q.isEmpty()) {
+
+            String word = q.poll();
+            int currLevel = level.get(word);
+
+            char[] arr = word.toCharArray();
+
+            for (int i = 0; i < arr.length; i++) {
+
+                char original = arr[i];
+
+                for (char ch = 'a'; ch <= 'z'; ch++) {
+                    arr[i] = ch;
+                    String newWord = new String(arr);
+                    if (dict.contains(newWord)) {
+                        if (!level.containsKey(newWord)) {
+                            level.put(newWord, currLevel + 1);
+                            parent.putIfAbsent(newWord, new ArrayList<>());
+                            parent.get(newWord).add(word);
+                            q.offer(newWord);
+                        } else if (level.get(newWord) == currLevel + 1) {
+                            parent.get(newWord).add(word);
+                        }
+                    }
+                }
+                arr[i] = original;
+            }
+        }
+
+        if (!level.containsKey(endWord))
+            return ans;
+
+        List<String> path = new ArrayList<>();
+
+        dfs(endWord, beginWord, parent, path, ans);
+        return ans;
+    }
+
+    public void dfs(String endWord, String beginWord, HashMap<String, List<String>> parent, List<String> path,
+            List<List<String>> ans) {
+
+        path.add(endWord);
+
+        if (endWord.equals(beginWord)) {
+            List<String> temp = new ArrayList<>(path);
+            Collections.reverse(temp);
+            ans.add(temp);
+            path.remove(path.size() - 1);
+            return;
+        }
+
+        for (String par : parent.get(endWord)) {
+            dfs(par, beginWord, parent, path, ans);
+        }
+        path.remove(path.size() - 1);
+    }
+
+}
