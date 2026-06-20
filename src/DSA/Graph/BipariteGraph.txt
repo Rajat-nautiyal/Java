@@ -1,0 +1,34 @@
+785. Is Graph Bipartite?
+
+//DFS Approach TC :- O(V + 2E) SC:- O(2V)
+class Solution {
+    public boolean dfs(int node, int[] vis, int color, int[][] graph){
+        vis[node] = color;
+
+        for(int nb : graph[node]){
+            if(vis[nb] != 0){
+                if(vis[nb] == color) return false;
+            }
+            else{
+                int nextColor = (color == 1) ? 2 : 1;
+                if(!dfs(nb, vis, nextColor, graph)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    public boolean isBipartite(int[][] graph) {
+        int n = graph.length;
+        int[] vis_color = new int[n];
+                                            //0 -> not visited
+                                            //1 -> visited(team A)
+                                            //2 -> visited(team B)
+        for(int i = 0; i < n; i++){
+            if(vis_color[i] == 0){
+                if(!dfs(i, vis_color,1,graph)) return false;
+            }
+        }
+        return true;
+    }
+}
