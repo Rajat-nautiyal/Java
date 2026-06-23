@@ -1,0 +1,78 @@
+802. Find Eventual Safe States
+
+//BFS Approach(brute):- TC:- O(V+E) + O(NlogN)
+ 1> Reverse the graph(i.e outdegree would be indegree) and store it in adj list.
+ 2> Now use Kahn BFS Algo and Then sort it
+ OR 
+  1> Dont add nodes which make a cycle and then sort it
+
+class Solution { 
+    public List<Integer> eventualSafeNodes(int[][] graph) {
+        int n = graph.length;
+        Queue<Integer> q = new LinkedList<>();
+        int[] indegree = new int[n];
+        List<List<Integer>> adjRev = new ArrayList<>();
+        List<Integer> ans = new ArrayList<>();
+
+        for(int i = 0; i < n; i++){
+            adjRev.add(new ArrayList<>());
+        }
+        for(int i = 0; i < n; i++){
+            for(int nb : graph[i]){
+                adjRev.get(nb).add(i);
+                indegree[i]++;
+            }
+        }
+        for(int i = 0; i < n; i++){
+            if(indegree[i] == 0) q.offer(i);
+        }
+        while(!q.isEmpty()){
+            int node = q.poll();
+            ans.add(node);
+            for(int in: adjRev.get(node)){
+                indegree[in]--;
+                if(indegree[in] == 0) q.offer(in);
+            }
+        }
+        Collections.sort(ans);
+        return ans;
+        
+    }
+}
+
+//Optimised Approach: DFS Approach TC:- O(V+E) SC:- O(V)
+class Solution {
+    public boolean dfs(int node, boolean[] vis, int[] vis_path, int[] safe, int[][] graph){
+        vis[node] = true;
+        vis_path[node] = 1;
+
+        for(int nb: graph[node]){
+            if(vis[nb]){
+                if(vis_path[nb] == 1) return true;
+            }else{
+                if(dfs(nb, vis, vis_path, safe, graph)) return true;
+            }
+        }
+        safe[node] = 1;
+        vis_path[node] = 0;
+        return false;
+    }
+    public List<Integer> eventualSafeNodes(int[][] graph) {
+        int n = graph.length;
+        boolean[] vis = new boolean[n];
+        int[] vis_path = new int[n];
+        int[] safe_nodes = new int[n];
+        List<Integer> ans = new ArrayList<>();
+
+        for(int i = 0; i < n; i++){
+            if(!vis[i]){
+                if(dfs(i, vis, vis_path, safe_nodes, graph));
+            }
+        }        
+        for(int i = 0; i < n; i++){
+            if(safe_nodes[i] == 1) ans.add(i);
+        }
+
+        return ans;        
+    }
+}
