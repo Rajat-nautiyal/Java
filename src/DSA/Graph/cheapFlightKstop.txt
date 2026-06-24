@@ -1,0 +1,112 @@
+787. Cheapest Flights Within K Stops
+
+//Brute:- using Min-heap(Dijkshtra) TC:- O(nLogV) SC:- O(n*k + V+n);
+class Solution {
+    public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
+        List<List<int[]>> adj = new ArrayList<>();
+        PriorityQueue<Pair> pq = new PriorityQueue<>((a,b)->a.d - b.d);
+        int[][] dist = new int[n][k+1];
+
+        for(int i = 0; i < n; i++) {
+            Arrays.fill(dist[i], (int)1e9);
+        }
+        for(int i = 0; i < n; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] fl : flights){
+            adj.get(fl[0]).add(new int[]{fl[1], fl[2]});
+        }
+        pq.offer(new Pair(0, 0, src));
+        dist[src][0] = 0;
+        while(!pq.isEmpty()){
+            int stops = pq.peek().s;
+            int minDist = pq.peek().d;
+            int node = pq.peek().dest;
+            pq.poll();
+
+            if(node == dst) return minDist;
+            if(stops > k) continue;
+
+            for(int[] nb : adj.get(node)){
+                int totdis = minDist + nb[1];
+                if(totdis <  dist[nb[0]][stops]){
+                    if(stops + 1 <= k+1){
+                        dist[nb[0]][stops] = totdis;
+                        pq.offer(new Pair(stops+1, totdis, nb[0]));
+                    }
+                }
+            }
+            
+        }
+        return -1;
+        
+    }
+}
+class Pair{
+    int s;
+    int d;
+    int dest;
+    Pair(int s, int d , int dest){
+        this.s = s;
+        this.d = d;
+        this.dest = dest;
+    }
+}
+
+//Optismised Approach: using BFS/ just Queue TC:- o(n + flights.length) SC:- (V+E)
+Algo:-
+This is a shortest path with a stop constraint.
+Normal Dijkstra doesn't work directly because a path with a lower cost may use more stops and become invalid.
+
+So we process queue as: (stopsUsed, currentCost, node)
+For each node, we try all outgoing flights and:
+If this gives a cheaper way to reach the neighbor, update its cost and push to queue with one extra stop.
+
+class Solution {
+    public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
+        List<List<int[]>> adj = new ArrayList<>();
+        Queue<Pair> q = new LinkedList<>();
+        int[] dist = new int[n];
+
+        Arrays.fill(dist, (int)1e9);        
+        for(int i = 0; i < n; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] fl : flights){
+            adj.get(fl[0]).add(new int[]{fl[1], fl[2]});
+        }
+        q.offer(new Pair(0, 0, src));
+        dist[src] = 0;
+        while(!q.isEmpty()){
+            int stops = q.peek().s;
+            int minDist = q.peek().d;
+            int node = q.peek().dest;
+            q.poll();
+
+            if(stops > k) continue;
+
+            for(int[] nb : adj.get(node)){
+                int totdis = minDist + nb[1];
+                if(totdis <  dist[nb[0]]){
+                    if(stops + 1 <= k+1){
+                        dist[nb[0]] = totdis;
+                        q.offer(new Pair(stops+1, totdis, nb[0]));
+                    }
+                }
+            }
+            
+        }
+        return dist[dst] != (int)1e9? dist[dst] : -1;
+        
+    }
+}
+class Pair{
+    int s;
+    int d;
+    int dest;
+    Pair(int s, int d , int dest){
+        this.s = s;
+        this.d = d;
+        this.dest = dest;
+    }
+}
