@@ -1,0 +1,48 @@
+743. Network Delay Time
+
+//Brute:- use Queue(BFS) worst TC O(n*edges) , 
+//Optimsed :- PriorityQueue(dijkstra) TC:- O(ELOGN)
+class Solution {
+    public int networkDelayTime(int[][] times, int n, int k) {
+        PriorityQueue<Pair> q = new PriorityQueue<>((a,b) -> a.d - b.d);
+        int[] dist = new int[n+1];
+        List<List<int[]>> adj = new ArrayList<>();
+
+        Arrays.fill(dist, (int)1e8);
+
+        for(int i = 0; i <= n; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] t : times){
+            adj.get(t[0]).add(new int[]{t[1], t[2]});
+        }
+        q.offer(new Pair(0, k));
+        dist[k] = 0;
+        while(!q.isEmpty()){
+            int node = q.peek().node;
+            int mindis = q.peek().d;
+            q.poll();
+            for(int[] nb : adj.get(node)){
+                int totdis = mindis + nb[1];
+                if(totdis < dist[nb[0]]){
+                    dist[nb[0]] = totdis;
+                    q.offer(new Pair(totdis, nb[0]));
+                }
+            }
+        }
+        int max = 0;
+        for(int i = 1; i <= n; i++){
+            max = Math.max(max, dist[i]);
+        }
+        if(max == (int)1e8) return -1;
+        return max;
+    }
+}
+class Pair{
+    int d;
+    int node;
+    Pair(int d, int node){
+        this.d = d;
+        this.node = node;
+    }
+}

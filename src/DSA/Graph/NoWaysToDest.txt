@@ -1,0 +1,51 @@
+1976. Number of Ways to Arrive at Destination
+
+//Dijkstra App:- TC O(ELOGN) SC O(N)
+Tip:- Use ways[n] to track no. of ways(shortest path) in each node;
+class Solution {
+    public int countPaths(int n, int[][] roads) {
+        PriorityQueue<Pair> pq = new PriorityQueue<>((a,b)-> Long.compare(a.d,b.d));
+        List<List<int[]>> adj = new ArrayList<>();
+        long[] vis = new long[n];
+        long[] ways = new long[n];
+        long mod = (long)1e9 + 7;
+        Arrays.fill(vis, Long.MAX_VALUE);
+        pq.add(new Pair(0,0));
+        ways[0] = 1;
+        vis[0]  = 0;
+        for(int i = 0; i < n; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] r : roads){
+            adj.get(r[0]).add(new int[] {r[1],r[2]});
+            adj.get(r[1]).add(new int[] {r[0],r[2]});
+        }
+        while(!pq.isEmpty()){
+            int node = pq.peek().n;
+            long dist = pq.peek().d;
+            pq.poll();
+            if (dist > vis[node]) continue;
+            for(int[] nb: adj.get(node)){
+                long d = nb[1] + dist;
+                int nbe = nb[0];
+                if(d < vis[nbe]){
+                    ways[nbe] = ways[node];
+                    vis[nbe] = d;
+                    pq.offer(new Pair(d, nbe));
+                }else if(d == vis[nbe]){
+                    ways[nbe] = (ways[node] + ways[nbe]) % mod;
+                }
+            }
+        }
+        return (int)(ways[n-1] % mod);
+
+    }
+}
+class Pair{
+    int n;
+    long d;
+    Pair(long d, int n){
+        this.d = d;
+        this.n = n;
+    }
+}
