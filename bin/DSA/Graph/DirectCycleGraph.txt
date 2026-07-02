@@ -1,0 +1,73 @@
+GFG: Directed Graph Cycle
+
+//DFS Approach:- TC: O(V+E) SC:- O(V+E+2V)
+
+class Solution {
+    public boolean dfs(int node, boolean[] vis, int[] path_vis, List<List<Integer>> adj){
+        vis[node] = true;
+        path_vis[node] = 1;
+        
+        for(int nb : adj.get(node)){
+            if(node != nb){
+                if(vis[nb]){
+                    if(path_vis[nb] == 1) return true;
+                }else{
+                    if(dfs(nb, vis, path_vis, adj)) return true;
+                }
+            }
+        }
+        path_vis[node] = 0;
+        return false;
+    }
+    public boolean isCyclic(int V, int[][] edges) {
+        // code here
+        boolean[] vis = new boolean[V];
+        int[] path_vis = new int[V];
+        List<List<Integer>> adj = new ArrayList<>();
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int i = 0; i < edges.length; i++){
+            adj.get(edges[i][0]).add(edges[i][1]);
+        }
+        for(int i = 0; i < V; i++){
+            if(!vis[i]){
+                if(dfs(i, vis, path_vis, adj)) return true;
+            }
+        }
+        return false;
+    }
+}
+
+//BFS Approach: TC:- O(V+E) SC:- O(V+E)
+class Solution {
+    public boolean isCyclic(int V, int[][] edges) {
+        // code here
+        List<List<Integer>> adj = new ArrayList<>();
+        int[] indegree = new int[V];
+        Queue<Integer> q = new LinkedList<>();
+        int cnt = 0;
+        
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e : edges){
+            adj.get(e[0]).add(e[1]);
+            indegree[e[1]]++;
+        }
+        for(int i = 0; i < V; i++){
+            if(indegree[i] == 0) q.offer(i);
+        }
+        
+        while(!q.isEmpty()){
+            int node = q.poll();
+            cnt++;
+            for(int in : adj.get(node)){
+                indegree[in]--;
+                if(indegree[in] == 0) q.offer(in);
+            }
+        }
+
+        return cnt != V;
+    }
+}

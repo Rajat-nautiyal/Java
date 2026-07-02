@@ -1,0 +1,95 @@
+864. Shortest Path to Get All Keys
+
+//Approach:- BFS, TC:- O(N*M*4) SC:- (N*M*64)
+
+1> Create Queue<dist, keymask, row, col> and vis[n][m][64](bool).
+2> Parse Grid, locate '@' (push into queue(0,0,i,j)) and count keys(totkeys).
+3> Mark vis[i][j][0] = true.(where i,j == @)
+4> Start BFS
+    5> keys = q.keys, dist = q.dist, r = q.row, c = q.col.
+    6> check if(keys == (1 << totkeys) - 1) return dist;
+    7> check all 4 direc
+        8> check if 'a' <= ch <= 'f'
+            newKey = keys | (1 << (ch - 'a'))
+        9> check if 'A' <= ch <= 'F'
+            check if we can pass lock else continue;
+        10> check if vis[nr][nc][newKeys] == false
+            push Queue<dist+1, newKeys, nr, nc>  and mark vis[nr][nc][newKeys] = true
+
+Q.Why BFS Works:-
+    Every move costs 1.
+    First time we reach a state with all keys, it is the shortest path.
+
+class Solution {
+    public int shortestPathAllKeys(String[] grid) {
+        int n = grid.length;
+        int  m = grid[0].length();
+        int totkeys = 0;
+        char[][] mat = new char[n][m];
+        Queue<Pair> q = new LinkedList<>();
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < m; j++){
+                mat[i][j] = grid[i].charAt(j);
+                if(mat[i][j] == '@'){
+                    q.offer(new Pair(i,j,0,0));
+                }else if(Character.isLetter(mat[i][j]) && Character.isLowerCase(mat[i][j])) totkeys++;
+            }
+        }
+        int p = 1 << Math.max(totkeys,1) //Max totkeys could be 6, p -> 64
+        boolean[][][] vis = new boolean[n][m][p]; 
+        int[] rd = {-1, 0, 1, 0};
+        int[] cd = {0, 1, 0, -1};
+
+        while(!q.isEmpty()){
+            int dist = q.peek().d;
+            int r = q.peek().r;
+            int c = q.peek().c;
+            int keys = q.peek().mask;            
+            q.poll();
+
+            if(keys == (1 << totkeys) - 1) return dist;
+
+            for(int i = 0; i < 4; i++){
+                int nr = r + rd[i];
+                int nc = c + cd[i];
+                if(nr < n && nc < m && nr >= 0 && nc >= 0 && mat[nr][nc] != '#'){
+                    char ch = mat[nr][nc];
+                    int newKeys = keys;
+
+                    if(ch >= 'A' && ch <= 'F'){ 
+                        int needed = ch - 'A';
+                        if((keys & (1 << needed)) == 0){ //Lock
+                            continue;
+                        }
+                    }
+                    else if(ch >= 'a' && ch <= 'f'){
+                        newKeys = keys | (1 << (ch - 'a'));
+                    }
+
+                    if(!vis[nr][nc][newKeys]){
+                        q.offer(new Pair(nr, nc, dist + 1, newKeys));
+                        vis[nr][nc][newKeys] = true;
+                    }
+                }
+            }
+
+        }
+        return -1;
+        
+        
+
+    }
+}
+class Pair{
+    int d;
+    int r;
+    int c;
+    int mask;
+    Pair(int r, int c, int d, int mask){
+        this.d = d;
+        this.r = r;
+        this.c = c;
+        this.mask = mask;
+    }
+}

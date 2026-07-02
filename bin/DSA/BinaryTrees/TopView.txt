@@ -1,0 +1,33 @@
+class Pair{
+    Node node;
+    int vertical;
+    Pair(Node node, int vertical){
+        this.node = node;
+        this.vertical = vertical;
+    }
+}
+class Solution {
+    
+    public ArrayList<Integer> topView(Node root) {
+        // code here
+        ArrayList<Integer> ans = new ArrayList<>();
+        if(root == null) return ans;
+        Queue<Pair> q = new LinkedList<>();
+        TreeMap<Integer, ArrayList<Integer>> mp = new TreeMap<>();
+        q.offer(new Pair(root, 0));
+        while(!q.isEmpty()){
+            Pair p = q.poll();
+            int x = p.vertical;
+            
+            mp.putIfAbsent(x, new ArrayList<>());
+            mp.get(x).add(p.node.data);
+            
+            if(p.node.left != null) q.offer(new Pair(p.node.left, x - 1));
+            if(p.node.right != null) q.offer(new Pair(p.node.right, x + 1));
+        }
+        for(ArrayList<Integer> ls: mp.values()){
+            ans.add(ls.get(0));
+        }
+        return ans;
+    }
+}

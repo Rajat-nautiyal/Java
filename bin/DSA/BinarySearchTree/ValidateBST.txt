@@ -1,0 +1,51 @@
+98. Validate Binary Search Tree
+
+//Morris Inorder Traversal:- TC- O(n) Sc- O(1)
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        Integer prev = null;  // Use Integer object to handle null sentinel
+        TreeNode curr = root;
+        
+        while (curr != null) {
+            if (curr.left == null) {
+                if (prev != null && prev >= curr.val) {
+                    return false;
+                }
+                prev = curr.val;
+                curr = curr.right;
+            } else {
+                TreeNode pred = curr.left;
+                while (pred.right != null && pred.right != curr) {
+                    pred = pred.right;
+                }
+                
+                if (pred.right == null) {
+                    pred.right = curr;
+                    curr = curr.left;
+                } else {
+                    if (prev != null && prev >= curr.val) {
+                        return false;
+                    }
+                    prev = curr.val;
+                    pred.right = null;
+                    curr = curr.right;
+                }
+            }
+        }
+        return true;        
+    }
+}
+
+//Recursion Tc-O(N) SC- O(H); H -> worst case-> n
+class Solution {
+    public boolean helper(TreeNode node, long min, long max){
+        if(node == null) return true;
+
+        if(node.val <= min  || node.val >= max) return false;
+
+        return helper(node.left, min, node.val) && helper(node.right, node.val, max);
+    }
+    public boolean isValidBST(TreeNode root) {
+        return helper(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+}

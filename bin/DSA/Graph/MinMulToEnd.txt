@@ -1,0 +1,39 @@
+GFG :- Minimum Multiplications to reach End
+
+//BFS Approach TC: O(MOD*N) SC:- O(MOD*N)
+class Solution {
+    public int minSteps(int[] arr, int start, int end) {
+        Queue<Pair> q = new LinkedList<>();
+        int[] steps = new int[1000];
+        
+        Arrays.fill(steps, (int)1e8);
+        
+        q.offer(new Pair(0, start));
+        steps[start] = 0;
+        
+        while(!q.isEmpty()){
+            int newStart = q.peek().n;
+            int s = q.peek().s;
+            q.poll();
+            
+            if(newStart == end) return s;
+            
+            for(int v : arr){
+                int mul = (newStart * v) % 1000;
+                if(s + 1 < steps[mul]){
+                    steps[mul] = s + 1;
+                    q.offer(new Pair(s+1, mul));
+                }
+            }
+        }
+        return -1;
+    }
+}
+class Pair{
+    int s;
+    int n;
+    Pair(int s, int n){
+        this.s = s;
+        this.n = n;
+    }
+}

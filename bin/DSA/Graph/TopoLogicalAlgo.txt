@@ -1,0 +1,72 @@
+GFG:- Topological Sort
+
+//DFS Approach
+class Solution {
+    public void dfs(int node, boolean[] vis, List<List<Integer>> adj, Stack<Integer> st){
+        vis[node] = true;
+        
+        for(int nb : adj.get(node)){
+            if(!vis[nb]){
+                dfs(nb, vis, adj, st);
+            }
+        }
+        st.push(node);
+    }
+    public ArrayList<Integer> topoSort(int V, int[][] edges) {
+        // code here
+        List<List<Integer>> adj = new ArrayList<>();
+        boolean vis[] = new boolean[V];
+        ArrayList<Integer> ans = new ArrayList<>();
+        Stack<Integer> st = new Stack<>();
+        
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int i = 0; i < edges.length; i++){
+            adj.get(edges[i][0]).add(edges[i][1]);
+        }
+        
+        for(int i = 0; i < V; i++){
+            if(!vis[i]){
+                dfs(i, vis, adj, st);
+            }
+        }
+        while(!st.isEmpty()){
+            ans.add(st.pop());
+        }
+        return ans;
+    }
+}
+
+//BFS Algo(Kahn algo)
+class Solution {
+    public ArrayList<Integer> topoSort(int V, int[][] edges) {
+        // code here
+        List<List<Integer>> adj = new ArrayList<>();
+        int indegree[] = new int[V];
+        ArrayList<Integer> ans = new ArrayList<>();
+        Queue<Integer> q = new LinkedList<>();
+        
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int i = 0; i < edges.length; i++){
+            adj.get(edges[i][0]).add(edges[i][1]);
+            indegree[edges[i][1]]++;
+        }
+        
+        for(int i = 0; i < V; i++){
+            if(indegree[i] == 0) q.offer(i);
+        }
+        while(!q.isEmpty()){
+            int node = q.poll();
+            ans.add(node);
+            
+            for(int in : adj.get(node)){
+                indegree[in]--;
+                if(indegree[in] == 0) q.offer(in);
+            }
+        }
+        return ans;
+    }
+}

@@ -1,0 +1,52 @@
+GFG:- Minimum Spanning Tree
+
+//TC:- O(ElogE) SC:- O(V)
+class Solution {
+    public int spanningTree(int V, int[][] edges) {
+        List<List<int[]>> adj = new ArrayList<>();
+        PriorityQueue<Pair> pq = new PriorityQueue<>((a,b) -> a.wt - b.wt);
+        boolean[] vis = new boolean[V];
+        int sum = 0;
+        
+        pq.add(new Pair(0, 0, -1));
+        vis[0] = true;
+        
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e: edges){
+            adj.get(e[0]).add(new int[]{e[1],e[2]});
+            adj.get(e[1]).add(new int[]{e[0],e[2]});
+        }
+        
+        while(!pq.isEmpty()){ //TC:- ELOGE + ELOGE
+            int node = pq.peek().node;
+            int parent = pq.peek().parent;
+            int wt = pq.peek().wt;
+            pq.poll();
+            
+            if(!vis[node]){
+                vis[node] = true;
+                sum += wt;
+            }
+            for(int[] nb : adj.get(node)){
+                int ewt = nb[1];
+                int nbe = nb[0];
+                if(!vis[nbe]){
+                    pq.add(new Pair(ewt, nbe, node));
+                }
+            }
+        }
+        return sum;
+    }
+}
+class Pair{
+    int wt;
+    int node;
+    int parent;
+    Pair(int wt, int node, int parent){
+        this.wt = wt;
+        this.node = node;
+        this.parent = parent;
+    }
+}

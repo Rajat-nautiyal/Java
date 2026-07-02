@@ -1,0 +1,22 @@
+Q. Print Root to Node Path in a Binary Tree
+
+//Optimised Approach TC-O(N) SC-O(N)
+public class Solution {
+    public static Boolean helper(TreeNode node, int target, ArrayList<Integer> ans){
+        if(node == null) return false;
+        ans.add(node.data);
+        if(node.data == target){
+            return true;
+        }
+        if(helper(node.left, target, ans) || helper(node.right, target, ans)){
+            return true;
+        }
+        ans.remove(ans.size()-1);
+        return false;
+    }
+    public static ArrayList<Integer> pathInATree(TreeNode root, int x) {
+        ArrayList<Integer> ans = new ArrayList<>();
+        helper(root, x, ans);
+        return ans;
+    }
+}

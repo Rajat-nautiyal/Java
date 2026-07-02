@@ -1,0 +1,95 @@
+//Inorder Successor/Predecessor in BST
+
+Brute Approach :- TC-O(2N) SC-O(2N);
+class Solution {
+    public void inorder(Node node, int key, ArrayList<Node> list){
+        if(node == null) return;
+        
+        inorder(node.left, key, list);
+        list.add(node);
+        inorder(node.right, key, list);
+    }
+    public ArrayList<Node> findPreSuc(Node root, int key) {
+        ArrayList<Node> list = new ArrayList<>();
+        inorder(root, key, list);
+        Node pred = null;
+        Node succ = null;
+        for(Node n: list){
+            if(n.data < key){
+                pred = n;
+            }else if(n.data > key){
+                succ = n;
+                break;
+            }
+        }
+        return new ArrayList<>(Arrays.asList(pred, succ));
+    }
+}
+
+Optimised Approach: Morris Inorder Traversal TC-O(2N) SC-O(1);
+class Solution {
+    public ArrayList<Node> findPreSuc(Node root, int key) {
+        // code here
+        Node pred = null;
+        Node succ = null;
+        Node curr = root;
+        
+        while(curr != null){
+            if(curr.left == null){
+                if(curr.data < key) pred = curr;
+                else if(curr.data > key){
+                  succ = curr;
+                  break;
+                }
+                curr = curr.right;
+            }else{
+                Node pre = curr.left;
+                while(pre.right != null && pre.right != curr){
+                    pre = pre.right;
+                }
+                if(pre.right == null){
+                    pre.right = curr;
+                    curr = curr.left;
+                }else{
+                    pre.right = null;
+                    if(curr.data < key) pred = curr;
+                    else if(curr.data > key){
+                      succ = curr;
+                      break;
+                    }
+                    curr = curr.right;
+                }
+            }
+        }
+        return new ArrayList<>(Arrays.asList(pred, succ));
+    }
+}
+
+//Optimised Approach - TC-O(H+M) SC-O(H);
+class Solution {
+    public Node findPred(Node node, int key, Node currPred){
+        if(node == null) return currPred;
+        if(node.data < key){
+            return findPred(node.right, key, node);
+        }else{
+            return findPred(node.left, key, currPred);
+        }
+    }
+    public Node findSucc(Node node, int key,Node currSucc){
+        if(node == null) return currSucc;
+        
+        if(node.data > key){
+            return findSucc(node.left, key, node);
+        }else{
+            return findSucc(node.right, key, currSucc);
+        }
+    }
+    
+    public ArrayList<Node> findPreSuc(Node root, int key) {
+        // code here
+        Node pred = findPred(root, key, null);
+        Node succ = findSucc(root, key, null);
+        
+        return new ArrayList<>(Arrays.asList(pred, succ));
+    }
+}

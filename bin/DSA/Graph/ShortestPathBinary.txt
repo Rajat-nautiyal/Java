@@ -1,0 +1,75 @@
+
+//Brute App. DFS
+class Solution {
+    public int dfs(int r, int c, int dist, boolean[][] vis, int[][]grid, int[] rowd, int[] cold, int[] min){
+        if(dist >= min[0] || grid[r][c] == 1) return (int)1e9;
+        if(r == grid.length-1 && c == grid.length-1){
+            min[0] = Math.min(min[0], dist);
+            return dist;
+        } 
+        vis[r][c] = true;
+
+        for(int i = 0; i < 8; i++){
+            int nr = r + rowd[i];
+            int nc = c + cold[i];
+            if(nr < grid.length && nr >= 0 && nc < grid.length && nc >= 0 && !vis[nr][nc] && grid[nr][nc] == 0){
+                dfs(nr, nc, dist+1, vis, grid, rowd, cold, min);
+            }
+        }
+        vis[r][c] = false;        
+        return (int)1e9;
+    }
+    public int shortestPathBinaryMatrix(int[][] grid) {
+        int n = grid.length;
+        boolean[][] vis = new boolean[n][n];
+        int[] rowdir = {0,-1,-1,-1,0,1,1,1};
+        int[] coldir = {-1,-1,0,1,1,1,0,-1};
+        int[] min = {(int)1e9};
+        int ans = dfs(0,0,1, vis,grid, rowdir, coldir, min);
+        if(min[0] == (int)1e9) return -1;
+        return min[0];
+    }
+}
+
+//Optismised Approach: BFS TC O(N*M*8) SC:-(N*M)
+class Solution {    
+    public int shortestPathBinaryMatrix(int[][] grid) {
+        if(grid[0][0] == 1 || grid[n-1][n-1] == 1){
+            return -1;
+        }
+        int n = grid.length;
+        int[][] dist = new int[n][n];
+        int[] rowdir = {0,-1,-1,-1,0,1,1,1};
+        int[] coldir = {-1,-1,0,1,1,1,0,-1};
+        Queue<Pair> q = new LinkedList<>();
+        q.offer(new Pair(1, 0, 0));        
+
+        while(!q.isEmpty()){
+            int d = q.peek().distance;
+            int r = q.peek().row;
+            int c = q.peek().col;
+            if(r == n-1 && c == n-1) return d;
+            q.poll();
+            for(int i = 0; i < 8; i++){
+                int nr = r + rowdir[i];
+                int nc = c + coldir[i];
+                if(nr < n && nc < n && nr >= 0 && nc >= 0 && grid[nr][nc] == 0 && (dist[nr][nc] == 0 || dist[nr][nc] > d + 1)){
+                    dist[nr][nc] = d + 1;
+                    q.offer(new Pair(d + 1, nr, nc));
+                }
+            }
+        }
+        return -1;
+
+    }
+    class Pair{
+        int distance;
+        int row;
+        int col;
+        Pair(int distance, int row, int col){
+            this.distance = distance;
+            this.row = row;
+            this.col = col;
+        }
+    }
+}

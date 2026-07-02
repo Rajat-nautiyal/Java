@@ -1,0 +1,86 @@
+GFG:- Alien Dictionary
+
+Algo:- 
+1> Iterate each word in words Array(i= 0->n-2).
+    2> check for 1st differentiating char in both string(i and i+1) i.e (s1[i][j] != s2[i+1][j]) or (u != v).
+        3> add it to adj list u -> v and indegree[v]++;
+        4> break;
+5> Now, use Topo sort(kahn algo) for sorting.
+6> Edge cases :- 
+    * Use adj List<Set<Integer>> to handle duplicacy (eg. a -> b exist so,dont add it again if encounter).
+    * if (i str len > i+1 str len) && (No diff char exist blw both) → return "" (eg. abc(i) and ab(i+1)).
+    * If(cycle detected) -> return ""
+
+
+TC :- O(W*L + V+E) SC :- O(26 + + E);
+class Solution {
+    public List<Integer> topo(int[] indegree, List<Set<Integer>> adj, boolean[] present){
+        Queue<Integer> q = new LinkedList<>();
+        List<Integer> ls = new ArrayList<>();
+        
+        for(int i = 0; i < 26; i++){
+            if(present[i]){
+                if(indegree[i] == 0) q.offer(i);
+            }
+        }
+        while(!q.isEmpty()){
+            int node = q.poll();
+            ls.add(node);
+            for(int nb : adj.get(node)){
+                indegree[nb]--;
+                if(indegree[nb] == 0) q.offer(nb);
+            }
+        }
+        for(int i = 0; i < 26; i++){
+            if(present[i]){
+                if(indegree[i] != 0) return new ArrayList<>();
+            }
+        }
+        return ls;
+    }
+    public String findOrder(String[] words) {
+        // code here
+        int n = words.length;
+        int[] indegree = new int[26];
+        boolean[] present = new boolean[26];
+        List<Set<Integer>> adj = new ArrayList<>();
+        StringBuilder ans = new StringBuilder();
+        
+        for(int i = 0; i < 26; i++){
+            adj.add(new HashSet<>());
+        }
+        for (String w : words) {
+            for (char c : w.toCharArray()) {
+                present[c - 'a'] = true;
+            }
+        }
+        for(int i = 0; i < n-1; i++){
+            int l1 = words[i].length();
+            int l2 = words[i+1].length();
+            
+            int min = Math.min(l1, l2);
+            boolean diff = false;
+            for(int j = 0; j < min; j++){
+                int u = words[i].charAt(j) - 'a';
+                int v = words[i+1].charAt(j) - 'a';
+                if(u != v){
+                    if(!adj.get(u).contains(v)){
+                        adj.get(u).add(v);
+                        indegree[v]++;
+                    }
+                    diff = true;
+                    break;
+                }
+            }
+            
+            if(l1 > l2 && !diff) return ""; //eg abc(i) and ab(i+1)
+        }
+        
+        List<Integer> ls = topo(indegree, adj, present);
+        
+        for(int ch : ls){
+            ans.append((char)(ch + 'a'));
+        }
+        return ans.toString();
+    }
+}

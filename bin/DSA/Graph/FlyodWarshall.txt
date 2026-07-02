@@ -1,0 +1,63 @@
+gfg:- Floyd Warshall
+
+//TC: O(V^3) SC: O(V^2)
+class Solution {
+    public void floydWarshall(int[][] dist) {
+        int n = dist.length;
+        
+        for(int via = 0; via < n; via++){
+            for(int i = 0; i < n; i++){
+                for(int j = 0; j < n; j++){
+                    if(dist[i][via] != (int)1e8 && dist[via][j] != (int)1e8){
+                        int val = dist[i][via] + dist[via][j];
+                        dist[i][j] = Math.min(dist[i][j], val);
+                    }
+                }
+            }
+        }
+        //To Detect Negative edges cycle
+        for(int i = 0; i < n; i++){
+            if(dist[i][i] < 0) //print Negative Cycle 
+        }
+    }
+}
+
+//Avg Optimised Dijkstra:(To use dijkstra graph must not contain neg cycle)
+class Solution {
+    public void floydWarshall(int[][] dist) {
+        // Code here
+        PriorityQueue<Pair> pq = new PriorityQueue<>((a,b) -> a.d - b.d);
+        int n = dist.length;
+        int[] len = new int[n];
+        
+        for(int i = 0; i < n; i++){
+            Arrays.fill(len, (int)1e8);
+            len[i] = 0;
+            pq.add(new Pair(0, i));
+            while(!pq.isEmpty()){
+                int d = pq.peek().d;
+                int node = pq.peek().n;
+                pq.poll();
+                for(int j = 0; j < n; j++){
+                    if(dist[node][j] == (int)1e8) continue;
+                    int distance = dist[node][j] + d;
+                    if(distance < len[j]){
+                        len[j] = distance;
+                        pq.offer(new Pair(distance, j));
+                    }
+                }
+            }
+            for(int j = 0; j < n; j++){
+                dist[i][j] = len[j];
+            }
+        }
+    }
+}
+class Pair{
+    int d;
+    int n;
+    Pair(int d, int n){
+        this.d = d;
+        this.n = n;
+    }
+}

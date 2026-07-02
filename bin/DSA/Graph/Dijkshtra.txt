@@ -1,0 +1,45 @@
+GFG:- Dijkstra Algorithm
+
+//Using MIN_HEAP :- TC:- O(E log V) SC:- O(V + E),
+class Solution {
+    public int[] dijkstra(int V, int[][] edges, int src) {
+        int[] dist = new int[V];
+        PriorityQueue<Pair> pq = new PriorityQueue<>((a,b) -> a.distance - b.distance);
+        List<List<int[]>> adj = new ArrayList<>();
+        
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+            dist[i] = (int)1e9;
+        }
+        
+        for(int[] e: edges){
+            adj.get(e[0]).add(new int[]{e[1], e[2]});
+            adj.get(e[1]).add(new int[]{e[0], e[2]});
+        }
+        dist[src] = 0;
+        pq.add(new Pair(0, src));
+        
+        while(!pq.isEmpty()){
+            int node = pq.peek().node;
+            int nodeDis = pq.peek().distance;
+            pq.poll();
+            for(int[] nb: adj.get(node)){
+                int nbDist  = dist[nb[0]];
+                int adjDist = nb[1];
+                if(nodeDis + adjDist < nbDist){
+                    dist[nb[0]] = nodeDis + adjDist;
+                    pq.add(new Pair(dist[nb[0]], nb[0]));
+                }
+            }
+        }
+        return dist;            
+    }
+}
+class Pair{
+    int node;
+    int distance;
+    Pair(int distance, int node){
+        this.distance = distance;
+        this.node = node;
+    }
+}

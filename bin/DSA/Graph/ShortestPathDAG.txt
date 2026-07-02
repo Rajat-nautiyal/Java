@@ -1,0 +1,45 @@
+gfg :- Shortest path in Directed Acyclic Graph
+
+//BFS(Kahn algo + little modified) TC:- O(V + E) SC:- O(V+E)
+class Solution {    
+    public int[] shortestPath(int V, int E, int[][] edges) {
+        List<List<int[]>> adj = new ArrayList<>();
+        int[] indegree = new int[V];
+        int[] dist = new int[V];
+        Queue<Integer> q = new LinkedList<>();
+        
+        Arrays.fill(dist,(int)1e9);
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e: edges){
+            adj.get(e[0]).add(new int[]{e[1],e[2]});
+            indegree[e[1]]++;
+        }
+        for(int i = 0; i < V; i++){
+            if(indegree[i] == 0){
+                q.offer(i);
+                dist[i] = (int)1e9; //INT_MAX + num -> -ve(overflow)
+            }
+        }        
+        dist[0] = 0;
+        while(!q.isEmpty()){
+            int node = q.poll();
+
+            for(int[] nb: adj.get(node)){
+                indegree[nb[0]]--;
+                if(indegree[nb[0]] == 0) q.offer(nb[0]);
+                if(dist[nb[0]] > dist[node] + nb[1]){ //it will handle,if i got shortest path in future 
+                    dist[nb[0]] = dist[node] + nb[1];
+                }
+            }
+        }
+        for(int i = 0; i < V; i++){
+            if(dist[i] == (int)1e9){
+                dist[i] = -1;
+            }
+        }
+        
+        return dist;
+    }
+}

@@ -1,0 +1,58 @@
+843. Guess the Word
+
+//Approach:- 
+1> Get the MostOverlapping word from List.(MostOverlapping Word are those whose characters appears most in other words);
+2> call the Master.guess(mostOverlappingWord) and store the matching integer(matchint);
+3> Now Run loop(for each word) 
+    4> cnt++ for each char who matches to mostOverlappingWord char
+    5> if(cnt != matchint) remove word from list;
+6> repeat;
+
+class Solution {
+    public void findSecretWord(String[] words, Master master) {
+        int[][] store = new int[6][26];
+        List<String> candidates = new ArrayList<>(Arrays.asList(words));
+
+        while(candidates.size() != 0){ 
+            int cnt = 0;
+            String s = mostOverlappingWord(candidates, store);
+            int match = master.guess(s);
+
+            if(match == 6) return;
+
+            for(int i = 0; i < candidates.size(); i++){
+                cnt = 0;
+                for(int pos = 0; pos < 6; pos++){
+                    if(candidates.get(i).charAt(pos) == s.charAt(pos)){ //find match
+                        cnt++;
+                    }
+                }
+                if(cnt != match){ //Eliminate Candidate from List
+                    candidates.remove(candidates.get(i));
+                    i--;
+                }
+            }
+        }
+    }
+    public String mostOverlappingWord(List<String> candidates, int[][] store){
+        int bestcnt = 0;
+        String bestword = "";
+
+        for(String w : candidates){
+            for(int pos = 0; pos < 6; pos++){
+                store[pos][w.charAt(pos) - 'a']++;
+            }
+        }
+        for(String w : candidates){
+            int cnt = 0;
+            for(int pos = 0; pos < 6; pos++){
+                cnt += store[pos][w.charAt(pos)  - 'a'];
+            }
+            if(cnt > bestcnt){
+                bestword = w;
+                bestcnt = cnt;
+            }
+        }
+        return bestword;
+    }
+}

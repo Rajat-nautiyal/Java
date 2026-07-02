@@ -1,0 +1,55 @@
+68. Text Justification
+
+
+class Solution {
+    public List<String> fullJustify(String[] words, int maxWidth) {
+        
+        int i = 0;
+        int j = 0;
+        List<String> ans = new ArrayList<>();
+
+        while(i < words.length){
+            j = i+1;
+            int chcount = words[i].length();
+            int totgadhe = 0;
+            boolean lastline = false;
+            while(j < words.length && chcount + totgadhe + words[j].length()+1 <= maxWidth){
+                totgadhe += 1;
+                chcount += words[j].length();
+                j++;
+            }
+            if(j == words.length) lastline = true;
+            int remspace = maxWidth - chcount;
+            int eachGadhaSpace = totgadhe != 0? remspace / totgadhe : 0;
+            int extraGadhaSpace = totgadhe != 0? remspace % totgadhe : remspace;
+            String s = getLine(i, j-1, eachGadhaSpace, extraGadhaSpace, words, lastline, maxWidth);
+            ans.add(s);
+            i = j;
+        }
+        return ans;
+    }
+    public String getLine(int start, int end, int eachGadhaSpace, int extraGadhaSpace, String[] words, boolean lastline, int mw){
+        StringBuilder s = new StringBuilder();
+        for(int i = start; i <= end; i++){
+            s.append(words[i]);
+            if(i == end) break;
+            if(lastline){
+                s.append(" ");
+            }else{
+                int eCount = eachGadhaSpace;
+                while(eCount > 0){
+                    s.append(" ");
+                    eCount--;
+                }
+                if(extraGadhaSpace > 0){
+                    s.append(" ");
+                    extraGadhaSpace--;
+                }
+            }
+        }
+        while(s.length() < mw){
+            s.append(" ");
+        }
+        return s.toString();
+    }
+}

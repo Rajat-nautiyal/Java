@@ -1,0 +1,68 @@
+207. Course Schedule
+
+//BFS Approach(Kahn algo) TC:- V+E SC O(V+E)
+class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        int cnt = 0;
+        Queue<Integer> q = new LinkedList<>();
+        int[] indegree = new int[numCourses];
+        List<List<Integer>> adj = new ArrayList<>();
+
+        for(int i = 0; i < numCourses; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e : prerequisites){
+            adj.get(e[0]).add(e[1]);
+            indegree[e[1]]++;
+        }
+        for(int i = 0; i < numCourses; i++){
+            if(indegree[i] == 0) q.offer(i);
+        }
+        while(!q.isEmpty()){
+            int node = q.poll();
+            cnt++;
+            for(int c: adj.get(node)){
+                indegree[c]--;
+                if(indegree[c] == 0) q.offer(c);
+            }
+        }
+        return numCourses == cnt;
+    }
+}
+
+//DFS Approach
+class Solution {
+    public boolean dfs(int node,boolean[] vis, int[] path, List<List<Integer>> adj){
+        vis[node] = true;
+        path[node] = 1;
+
+        for(int cour : adj.get(node)){
+            if(vis[cour]){
+                if(path[cour] == 1) return true;
+            }else{
+                if(dfs(cour, vis, path, adj)) return true;
+            }
+        }
+        path[node] = 0;
+        return false;
+    }
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        boolean[] vis = new boolean[numCourses];
+        int[] path = new int[numCourses];
+        List<List<Integer>> adj = new ArrayList<>();
+
+        for(int i = 0; i < numCourses; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e : prerequisites){
+            adj.get(e[0]).add(e[1]);
+        }
+
+        for(int i = 0; i < numCourses; i++){
+            if(!vis[i]){
+                if(dfs(i, vis, path, adj)) return false;
+            }
+        }
+        return true;
+    }
+}

@@ -1,0 +1,36 @@
+GFG- Largest BST
+
+
+-->Optimised Approach:- TC- O(N) SC-O(N);
+class BSTNode{
+    int minNode;
+    int maxNode;
+    int size;
+    BSTNode(int minNode, int maxNode, int size){
+        this.minNode = minNode;
+        this.maxNode = maxNode;
+        this.size = size;
+    }
+}
+
+class Solution {
+    static BSTNode validBSTsize(Node node){
+        if(node == null){
+            return new BSTNode(Integer.MAX_VALUE, Integer.MIN_VALUE, 0);
+        }
+        BSTNode l = validBSTsize(node.left);
+        BSTNode r = validBSTsize(node.right);
+
+        if(l.maxNode < node.data && node.data < r.minNode){
+            return new BSTNode(Math.min(l.minNode, node.data), Math.max(r.maxNode, node.data), l.size + r.size + 1);
+        }else{
+            return new BSTNode(Integer.MIN_VALUE, Integer.MAX_VALUE, Math.max(l.size, r.size));
+        }
+    }
+
+    static int largestBst(Node root) {
+        BSTNode node = validBSTsize(root);
+        return node.size;
+
+    }
+}

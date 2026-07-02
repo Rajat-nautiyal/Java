@@ -1,0 +1,75 @@
+210. Course Schedule II
+
+/BFS Approach(kahn algo)
+class Solution {
+    public int[] findOrder(int numCourses, int[][] prerequisites) {
+        Queue<Integer> q = new LinkedList<>();
+        int[] indegree = new int[numCourses];
+        List<List<Integer>> adj = new ArrayList<>();
+        int[] ans = new int[numCourses];
+        int idx = 0;        
+
+        for(int i = 0; i < numCourses; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e : prerequisites){
+            adj.get(e[1]).add(e[0]);
+            indegree[e[0]]++;
+        }
+        for(int i = 0; i < numCourses; i++){
+            if(indegree[i] == 0) q.offer(i);
+        }
+        while(!q.isEmpty()){
+            int node = q.poll();
+            ans[idx++] = node;
+            for(int c: adj.get(node)){
+                indegree[c]--;
+                if(indegree[c] == 0) q.offer(c);
+            }
+        }
+        if(idx != numCourses) return new int[]{};
+        return ans;
+    }
+}
+
+//DFS Approach
+class Solution {
+    public boolean dfs(int node,boolean[] vis, int[] path, List<List<Integer>> adj, int[] ans, int[] ind){
+        vis[node] = true;
+        path[node] = 1;
+
+        for(int cour : adj.get(node)){
+            if(vis[cour]){
+                if(path[cour] == 1) return true;
+            }else{
+                if(dfs(cour, vis, path, adj, ans,  ind)) return true;
+            }
+        }
+        ans[ind[0]--] = node;
+        path[node] = 0;        
+        return false;
+    }
+    
+    public int[] findOrder(int numCourses, int[][] prerequisites) {
+        boolean[] vis = new boolean[numCourses];
+        int[] path = new int[numCourses];
+        List<List<Integer>> adj = new ArrayList<>();
+        int[] ans = new int[numCourses];
+        int[] ind = {numCourses-1};
+
+        for(int i = 0; i < numCourses; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e : prerequisites){
+            adj.get(e[1]).add(e[0]);
+        }
+
+        for(int i = 0; i < numCourses; i++){
+            if(!vis[i]){
+                if(dfs(i, vis, path, adj, ans, ind)) return new int[]{};
+            }
+        }
+        return ans;
+        
+    }
+}

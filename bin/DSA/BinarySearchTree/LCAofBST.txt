@@ -1,0 +1,38 @@
+
+Brute Approach:- //Recursion (same as LCA of BT)
+
+Better app:-Recursion , takes TC- O(h) SC O(h or n)
+class Solution {
+    public TreeNode helper(TreeNode node, TreeNode p, TreeNode q){
+        if(node == null) return null;
+
+        if(node == p || node == q) return node;
+
+        if(p.val < node.val && q.val < node.val){
+            return helper(node.left, p, q);
+        }
+        if(p.val > node.val && q.val > node.val){
+            return helper(node.right, p, q);
+        }
+        return node;
+    }
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        return helper(root, p, q);
+    }
+}
+
+//Optimised Approach(Iterative Approach) TC- O(h) SC O(1)
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        TreeNode curr = root;
+        while(curr != null){
+            if(p.val < curr.val && q.val < curr.val){
+                curr = curr.left;
+                continue;
+            }
+            if(p.val > curr.val && q.val > curr.val){
+                curr = curr.right;
+                continue;
+            }else break;
+        }
+        return curr;
+    }
