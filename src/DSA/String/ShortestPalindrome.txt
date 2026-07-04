@@ -1,0 +1,41 @@
+214. Shortest Palindrome
+
+//Opt app: KMP
+IDEA:(also for brute)
+*> Compare s string (from end part) to reverse(s) string (from front part);
+*> if they are same , return reverse.substring(0,i)(front part which was rejected) + s
+	
+rev.substring(0, s.length() - lps[last]).toString() + s
+	S = a a b b a 
+	r = a b b a a
+get Lps[] of s + # + rev(s)
+	    a a b b a  #  a b b a a
+LPS[]:	0 1 0 0 1  0  1 0 0 1 2
+	rev.subs(0, 5 - 2) + s => abbaabba(ans) 
+
+class Solution {
+    public String shortestPalindrome(String s) {
+        if(s.length() == 0) return "";
+        if(s.length() == 1) return s;
+        StringBuilder rev = new StringBuilder(s).reverse();
+        String ns = s + "#" + rev.toString();
+        int n = ns.length();
+        int[] lps = new int[n];
+        buildlps(ns, lps);
+        return rev.substring(0, s.length() - lps[n-1]).toString() + s;
+    }
+    public void buildlps(String s, int[] lps){
+        int len = 0;
+        int i = 1;
+        while(i < s.length()){
+            if(s.charAt(len) == s.charAt(i)){
+                lps[i++] = ++len;
+            }else{
+                if(len > 0) len = lps[len-1];
+                else{
+                    lps[i++] = 0;
+                }
+            }
+        }
+    }
+}

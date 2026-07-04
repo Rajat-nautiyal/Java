@@ -1,0 +1,93 @@
+947. Most Stones Removed with Same Row or Column
+
+//Idea:- 
+    1> Get No. of connectedComponents;
+    2> Max no. of stones we can remove = total no. of stones(n) - connectedComponent(ans);
+
+//Better Approach:- DFS app; TC:- O(N+E)
+class Solution {
+    public void dfs(int node, boolean[] vis, List<List<Integer>> adj){
+        vis[node] = true;
+
+        for(int nb: adj.get(node)){
+            if(!vis[nb]){
+                dfs(nb, vis, adj);
+            }
+        }
+    }
+
+    public int removeStones(int[][] stones) {
+        int n = stones.length;
+        boolean[] vis = new boolean[n];
+        int connectedComponent = 0;
+        List<List<Integer>> adj = new ArrayList<>();
+
+        for(int i = 0; i < n; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int i=0;i<n;i++){
+            for(int j=i+1;j<n;j++){
+                if(stones[i][0]==stones[j][0] || stones[i][1]==stones[j][1]){ // if row or col are same blw i and j stone that means it forms an edge
+                    adj.get(i).add(j);
+                    adj.get(j).add(i);
+                }
+            }
+        }
+        for(int i = 0; i < n; i++){
+            if(!vis[i]){
+                connectedComponent++;
+                dfs(i, vis, adj);
+            }
+        }
+        int ans = n - connectedComponent;
+        return ans;        
+    }
+}
+
+//Optimised Approach: Disjoint Set by rank TC:- O(N+E*alpha)
+class Solution {
+    public int findp(int node, int[] parent){
+        
+        if(node == parent[node]) return node;
+
+        parent[node] = findp(parent[node], parent);
+        return parent[node];
+    }
+
+    public int removeStones(int[][] stones) {
+        int n = stones.length;
+        int[] parent = new int[n];
+        int[] rank = new int[n];
+        int connectedComponent = 0;
+        for(int i = 0; i < n; i++){
+            parent[i] = i;
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (stones[i][0] == stones[j][0] ||
+                        stones[i][1] == stones[j][1]) {
+                    int ulp_u = findp(i, parent);
+                    int ulp_v = findp(j, parent);
+
+                    if (ulp_u == ulp_v) continue;
+
+                    if (rank[ulp_u] < rank[ulp_v]) {
+                        parent[ulp_u] = ulp_v;
+                    } else if (rank[ulp_u] > rank[ulp_v]) {
+                        parent[ulp_v] = ulp_u;
+                    } else {
+                        parent[ulp_v] = ulp_u;
+                        rank[ulp_u]++;
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            if (parent[i] == i)
+                connectedComponent++;
+        }
+
+        int ans = n - connectedComponent;
+        return ans;
+    }
+}

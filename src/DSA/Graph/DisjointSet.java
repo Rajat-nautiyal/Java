@@ -55,7 +55,7 @@ class DisjointSet {
         if (size[ulp_v] < size[ulp_u]) {
             parent[ulp_v] = ulp_u;
             size[ulp_u] += size[ulp_v];
-        }else { // if both have same size
+        }else {
             parent[ulp_u] = ulp_v;
             size[ulp_v] += size[ulp_u];
         }

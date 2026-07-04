@@ -1,0 +1,93 @@
+1319. Number of Operations to Make Network Connected
+
+//Idea:- 
+    1> Get No. of connectedComponents and extra edges;
+    2> Minm no. of edges req. to connect all connectedComponents = connectedComponent - 1(ans);
+    *> edge case: if(extraEdges < ans) return -1;
+
+//Better Approach:- DFS app; TC:- O(N+E)
+class Solution {
+    public void dfs(int node, boolean[] vis, int[] e, List<List<Integer>> adj){
+        vis[node] = true;
+
+        for(int nb: adj.get(node)){
+            if(!vis[nb]){
+                e[0]--;
+                dfs(nb, vis, e, adj);
+            }
+        }
+    }
+    public int makeConnected(int n, int[][] connections) {
+        boolean[] vis = new boolean[n];
+        int[] e = {connections.length};//cnt unused edges
+        int connectedComponent = 0;
+        List<List<Integer>> adj = new ArrayList<>();
+
+        for(int i = 0; i < n; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] c: connections){
+            adj.get(c[0]).add(c[1]);
+            adj.get(c[1]).add(c[0]);
+        }
+        for(int i = 0; i < n; i++){
+            if(!vis[i]){
+                connectedComponent++;
+                dfs(i, vis, e, adj);
+            }
+        }
+        int reqEdges = connectedComponent - 1;
+        if(e[0] - reqEdges < 0) return -1;
+        return reqEdges;
+
+    }
+}
+
+//Optimised Approach: Disjoint Set by rank TC:- O(N+E*alpha)
+//Remember DSU ignore the extra edges used by a connected graph(our advantage in this q)
+class Solution {
+    public int findp(int node, int[] parent){
+        
+        if(node == parent[node]) return node;
+
+        parent[node] = findp(parent[node], parent);
+        return parent[node];
+    }
+    public int makeConnected(int n, int[][] connections) {
+        int[] parent = new int[n];
+        int[] rank = new int[n];
+        int connectedComponent = 0;
+        int e = 0;//cnt extra edges
+
+        for(int i = 0; i < n; i++){
+            parent[i] = i;
+        }
+        for(int[] c: connections){
+            int ulp_u = findp(c[0], parent);
+            int ulp_v = findp(c[1], parent);
+            
+            if(ulp_u == ulp_v){
+                e++;
+                continue;
+            }
+            if(rank[ulp_u] < rank[ulp_v]){
+                parent[ulp_u] = ulp_v;                
+            }
+            else if(rank[ulp_u] > rank[ulp_v]){
+                parent[ulp_v] = ulp_u;
+            }
+            else{
+                parent[ulp_v] = ulp_u;
+                rank[ulp_u]++;
+            }
+        }
+        //cnt connectedComponent
+        for(int i = 0; i < n; i++){
+            if(parent[i] == i) connectedComponent++;
+        }
+        int reqEdges = connectedComponent - 1;
+        if(e - reqEdges < 0) return -1;
+        return reqEdges;
+
+    }
+}
