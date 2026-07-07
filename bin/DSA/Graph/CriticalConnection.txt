@@ -1,0 +1,59 @@
+1192. Critical Connections in a Network
+
+//Approach:- Tarjan's Algorithm TC:- O(V+E) SC:- O(V+E + 3V)
+1. Build adjacency list.
+2. Set a timer (starts at 0 or 1) to track discovery times.
+3. **Run DFS** :- from node 0:
+   - visited[node] = true.
+   - discoverytime[node] = lowesIntime[node] = timer++.
+    4. **For each neighbor:**
+        - If neighbor == parent → skip.
+
+        - If unvisited → call DFS, then:
+            - lowesIntime[node] = Math.min(lowesIntime[node], lowesIntime[neighbor]).
+            - Bridge exists if disc[node] < lowesIntime[neighbor].
+
+        - If already visited → update current node's `low time` with neighbor's `discovery time`.
+
+5. return ans
+
+class Solution {
+    private int timer = 0;
+
+    public void dfs(int node, int parent,boolean[] vis,int[] tin, int[] lowin,List<List<Integer>> adj,List<List<Integer>> bridges){
+        vis[node] = true;
+        tin[node] = timer;
+        lowin[node] = timer++;
+
+        for(int nb: adj.get(node)){
+            if(nb == parent) continue;
+            if(!vis[nb]){
+                dfs(nb, node, vis, tin, lowin, adj, bridges);
+                lowin[node] = Math.min(lowin[node], lowin[nb]);
+                if(tin[node] < lowin[nb]) bridges.add(Arrays.asList(node, nb));
+            }else{
+                lowin[node] = Math.min(lowin[node], lowin[nb]);
+            }
+        }
+
+    }
+    public List<List<Integer>> criticalConnections(int n, List<List<Integer>> connections) {
+        boolean[] vis = new boolean[n];
+        int[] lowin = new int[n];
+        int[] tin = new int[n];
+        List<List<Integer>> adj = new ArrayList<>();
+        List<List<Integer>> bridges = new ArrayList<>();
+
+        for(int i = 0; i < n; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(List<Integer> e: connections){
+            adj.get(e.get(0)).add(e.get(1));
+            adj.get(e.get(1)).add(e.get(0));
+        }
+        dfs(0,-1,vis,tin,lowin,adj,bridges);
+
+        return bridges;
+        
+    }
+}

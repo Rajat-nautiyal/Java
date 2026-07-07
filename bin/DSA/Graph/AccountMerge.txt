@@ -1,0 +1,73 @@
+721. Accounts Merge
+
+TC:- (N+E) + O(E*4ɑ) + O(N*(ElogE + E)) where N = no. of indices or nodes and E = no. of emails
+class Solution {
+    public int findp(int node, int[] parent){
+        if(node == parent[node]) return node;
+
+        parent[node] = findp(parent[node], parent);
+        return parent[node];
+    }
+    public void unionByRank(int u, int v, int[] parent, int[] rank){
+        int ulp_u = findp(u, parent);
+        int ulp_v = findp(v, parent);
+
+        if(ulp_u == ulp_v) return;
+        if (rank[ulp_u] < rank[ulp_v]) {
+            parent[ulp_u] = ulp_v;
+        } else if (rank[ulp_u] > rank[ulp_v]) {
+            parent[ulp_v] = ulp_u;
+        } else {
+            parent[ulp_v] = ulp_u;
+            rank[ulp_u]++;
+        }
+
+    }
+    public List<List<String>> accountsMerge(List<List<String>> accounts) {
+        int n = accounts.size();
+        List<List<String>> ans = new ArrayList<>();
+        HashMap<String, Integer> mp = new HashMap<>();
+        int[] parent = new int[n];
+        int[] rank = new int[n];
+        ArrayList<String>[] ls = new ArrayList[n];
+
+        for(int i = 0; i < n; i++){
+            parent[i] = i;
+        }
+        for(int i = 0; i < n; i++){
+            for(int j = 1; j < accounts.get(i).size(); j++){
+                String  s = accounts.get(i).get(j);
+                if(mp.containsKey(s)){                    
+                    unionByRank(i, mp.get(s), parent, rank);
+                }else{
+                    mp.put(s, i);
+                }
+            }
+        }
+
+        for(int i = 0; i < n; i++){
+            ls[i] = new ArrayList<>();
+        }
+        for(Map.Entry<String, Integer> m: mp.entrySet()){
+            int v = m.getValue();
+            String s = m.getKey();
+            int ul_p = findp(v, parent);
+            ls[ul_p].add(s);
+        }
+
+        for(int i = 0; i < n; i++){
+            if(ls[i].size() == 0) continue;
+
+            Collections.sort(ls[i]);
+            List<String> temp = new ArrayList<>();            
+            temp.add(accounts.get(i).get(0));
+
+            for(String s: ls[i]){
+                temp.add(s);
+            }
+            ans.add(temp);
+        }
+
+        return ans;
+    }
+}

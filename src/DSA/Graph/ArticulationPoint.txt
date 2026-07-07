@@ -1,0 +1,64 @@
+GFG:- Articulation Point - I
+
+//Approach:- Tarjan's Algorithm TC:- O(V+E) SC:- O(V+E + 3V)
+1. Build adjacency list.
+2. Set a timer (starts at 0 or 1) to track discovery times.
+3. **Run DFS** :- from node 0:
+   - visited[node] = true.
+   - discoverytime[node] = lowesIntime[node] = timer++.
+   - child = 0(just for node 0(root) edge case)
+    4. **For each neighbor:**
+        - If neighbor == parent → skip.
+        - child++;
+        - If unvisited → call DFS, then:
+            - lowesIntime[node] = Math.min(lowesIntime[node], lowesIntime[neighbor]).
+            - Articulation point exist, if disc[node] <= lowesIntime[neighbor] -> mark[node] = 1.
+
+        - If already visited → lowesIntime[node] = Math.min(lowesIntime[node], discoverytime[neighbor]).
+    5. -Edge case(if 0(root) have multiple childs):- if(parent == -1 && child > 1) mark[root] = 1.
+
+5. return ans
+
+
+class Solution {
+    private int timer = 0;
+    public void dfs(int node,int parent,boolean[] vis,int[] lowin,int[] tin, int[] mark, ArrayList<ArrayList<Integer>> adj){
+        tin[node] = timer;
+        lowin[node] = timer++;
+        vis[node] = true;
+        int child = 0; //edge case: just for node 0
+        for(int nb: adj.get(node)){
+            if(nb == parent) continue;
+            if(!vis[nb]){
+                child++;
+                dfs(nb, node, vis, lowin, tin,mark, adj);
+                lowin[node] = Math.min(lowin[node], lowin[nb]);
+                if(parent != -1 && tin[node] <= lowin[nb]) mark[node] = 1;
+            }else{
+                lowin[node] = Math.min(lowin[node], tin[nb]);
+            }
+        }
+        if(child > 1 && parent == -1){ //edge case:- when node 0 has multiple childs
+            mark[node] = 1;
+        }
+    }
+    public ArrayList<Integer> articulationPoints(int V,
+                                                 ArrayList<ArrayList<Integer>> adj) {
+        // Code here
+        boolean[] vis = new boolean[V];
+        int[] lowin = new int[V];
+        int[] tin = new int[V];
+        int[] mark = new int[V];
+        ArrayList<Integer> ans = new ArrayList<>();
+        
+        dfs(0,-1, vis, lowin, tin, mark, adj);
+        for(int i = 0; i < V; i++){
+            if(mark[i] == 1){
+                ans.add(i);
+            }
+        }
+        if(ans.size() == 0) ans.add(-1);
+        return ans;
+    }
+    
+}

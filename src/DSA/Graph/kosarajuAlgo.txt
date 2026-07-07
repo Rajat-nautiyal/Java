@@ -1,0 +1,67 @@
+GFG:- Count Strongly Connected
+
+Approach:- Kosaraju Algorithm
+1> store topo sort in a stack
+2> Transpose the current graph(i.e reverse each direction)
+3> Pop each el from stack and if !vis[node] SCC++ and run dfs.
+return SCC;
+
+TC:- O(V+E) SC O(V+E)
+class Solution {
+    public void dfs(int node, Stack<Integer> st, int[] vis, List<List<Integer>> adj){
+        vis[node] = 1;
+        for(int nb : adj.get(node)){
+            if(vis[nb] == 0){
+                dfs(nb, st, vis, adj);
+            }
+        }
+        st.push(node);
+    }
+    public void dfs2(int node, int[] vis, List<List<Integer>> adj){
+        vis[node] = 1;
+        for(int nb : adj.get(node)){
+            if(vis[nb] == 0){
+                dfs2(nb, vis, adj);
+            }
+        }
+    }        
+    public int kosaraju(int V, int[][] edges) {
+        //step 1. create adj list and store topo sort in a stack
+        List<List<Integer>> adj = new ArrayList<>();
+        int[] vis = new int[V];
+        Stack<Integer> st = new Stack<>();
+        int cntSCC = 0;
+        
+        for(int i = 0; i < V; i++){
+            adj.add(new ArrayList<>());
+        }
+        for(int[] e: edges){
+            adj.get(e[0]).add(e[1]);
+        }
+        for(int i = 0; i < V; i++){
+            if(vis[i] == 0){
+                dfs(i, st, vis, adj);
+            }
+        }
+        //step 2. Transpose the current graph
+        List<List<Integer>> adjR = new ArrayList<>();
+        for(int i = 0; i < V; i++){
+            adjR.add(new ArrayList<>());
+        }
+        for(int i = 0; i < V; i++){
+            vis[i] = 0;
+            for(int it: adj.get(i)){
+                adjR.get(it).add(i);
+            }
+        }
+        //step 3. take each el from stack and run dfs and cnt SCC
+        while(!st.isEmpty()){
+            int node  = st.pop();
+            if(vis[node] == 0){
+                cntSCC++;
+                dfs2(node, vis, adjR);
+            }
+        }
+        return cntSCC;
+    }
+}
