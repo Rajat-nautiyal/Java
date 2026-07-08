@@ -1,0 +1,54 @@
+198. House Robber
+
+//Memoization
+class Solution {
+    public int helper(int ind, int[] dp, int[] nums){
+        if(ind == 0) return nums[ind];
+        if(ind < 0) return 0;
+
+        if(dp[ind] != -1) return dp[ind];
+
+        int pick = nums[ind] + helper(ind-2, dp, nums);
+        int notpick = helper(ind-1,dp, nums);
+
+        dp[ind] = Math.max(pick, notpick);
+        return dp[ind];
+    }
+    public int rob(int[] nums) {
+        int n = nums.length;
+        int[] dp = new int[n];
+        Arrays.fill(dp, -1);
+        return helper(n-1, dp, nums);
+    }
+}
+//Tabulation
+class Solution {
+    public int rob(int[] nums) {
+        int n = nums.length;
+        int[] dp = new int[n];
+        dp[0] = nums[0];
+
+        for(int i = 1; i < n; i++){  
+            int pick = nums[i];
+            if(i > 1) pick += dp[i-2];
+            int notpick = dp[i-1];
+            dp[i] = Math.max(pick, notpick);
+        }
+        return dp[n-1];
+    }
+}
+//Space Optimised
+class Solution {
+    public int rob(int[] nums) {
+        int n = nums.length;
+        int p1 = nums[0];
+        int p2 = 0;
+        for(int i = 1; i < n; i++){  
+            int pick = nums[i] + p2;            
+            int notpick = p1;
+            p2 = p1;
+            p1 = Math.max(pick, notpick);
+        }
+        return p1;
+    }
+}
