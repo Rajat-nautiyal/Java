@@ -1,0 +1,66 @@
+120. Triangle
+
+//Memo TC:- o(M*N) SC O(N*m);
+class Solution {
+    public int helper(int r, int c, List<List<Integer>> t, int[][] dp){
+        if(r > t.size()-1) return 0;
+
+        if(r == t.size()-1) return t.get(r).get(c);
+        if(dp[r][c] != 0) return dp[r][c];
+
+        int min = Integer.MAX_VALUE;
+        int left = helper(r+1, c, t, dp);
+        int right = helper(r+1, c+1, t, dp);
+
+        min = Math.min(left, right);
+        dp[r][c] = min + t.get(r).get(c);
+        return dp[r][c];
+    }
+    public int minimumTotal(List<List<Integer>> triangle) {
+        int n = triangle.size();
+        int[][] dp = new int[n][n];
+                
+        return helper(0,0, triangle, dp);
+    }
+}
+//Tabulation
+class Solution {
+    public int minimumTotal(List<List<Integer>> triangle) {
+        int n = triangle.size();
+        int[][] dp = new int[n][n];
+        
+        for(int i = n-1; i >= 0; i--){
+            for(int j = i; j >= 0; j--){
+                if(i != n-1){
+                    int u = dp[i+1][j];
+                    int v = dp[i+1][j+1];
+                    dp[i][j] =  Math.min(u, v) + triangle.get(i).get(j);      
+                }else{
+                    dp[i][j] = triangle.get(i).get(j);
+                }
+            }
+        }
+        return dp[0][0];
+    }
+}
+
+//Space Optimisation TC:- M*N SC O(N);
+class Solution {
+    public int minimumTotal(List<List<Integer>> triangle) {
+        int n = triangle.size();
+        int[] dp = new int[n];
+        
+        for(int i = n-1; i >= 0; i--){
+            for(int j = 0; j <= i; j++){
+                if(i != n-1){
+                    int u = dp[j];
+                    int v = dp[j+1];
+                    dp[j] =  Math.min(u, v) + triangle.get(i).get(j);      
+                }else{
+                    dp[j] = triangle.get(i).get(j);
+                }
+            }
+        }
+        return dp[0];
+    }
+}

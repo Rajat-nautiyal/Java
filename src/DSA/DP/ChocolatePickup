@@ -1,0 +1,115 @@
+Chocolate Pickup
+
+//Memoziation
+public class Solution {
+	public static int helper(int r, int c1, int c2, int[][] grid, int[][][] dp){
+		if(r >= grid.length || c1 < 0 || c1 >= grid[0].length ||c2 < 0 || c2 >= grid[0].length){
+			return 0;
+		}
+		if(r == grid.length - 1){
+			if(c1 == c2) return grid[r][c1];
+			return grid[r][c1] + grid[r][c2];
+		}
+		if(dp[r][c1][c2] != 0) return dp[r][c1][c2];
+		int max = 0;
+		for(int dc1 = -1; dc1 <= 1; dc1++){
+			int nc1 = c1 + dc1;
+			for(int dc2 = -1; dc2 <= 1; dc2++){
+				int nc2 = c2 + dc2;
+				max = Math.max(max, helper(r+1, nc1, nc2, grid, dp));
+			}
+		}
+		if(c1 == c2){
+			dp[r][c1][c2] = max + grid[r][c1];
+			return dp[r][c1][c2];
+		}  
+		dp[r][c1][c2] = max + grid[r][c1] + grid[r][c2];
+		return dp[r][c1][c2];
+	}
+
+	public static int maximumChocolates(int r, int c, int[][] grid) {
+        int[][][] dp = new int[r][c][c];
+		return helper(0, 0, c-1, grid, dp);
+	}
+}
+
+//Tabulation
+	public static int maximumChocolates(int r, int c, int[][] grid) {
+		// Write your code here.
+		int[][][] dp = new int[r][c][c];
+
+		for(int j1 = 0; j1 < c; j1++){
+			for(int j2 = 0; j2 < c; j2++){
+				if(j1 == j2) dp[r-1][j1][j2] = grid[r-1][j1];
+				else{
+					dp[r-1][j1][j2] = grid[r-1][j1] + grid[r-1][j2];
+				}
+			}
+		}
+
+		for(int i = r - 2; i >= 0; i--){
+			for(int j1 = 0; j1 < c; j1++){
+				for(int j2 = 0; j2 < c; j2++){
+                    int max = Integer.MIN_VALUE;  // Better initialization
+					int curr = j1 == j2? grid[i][j1] : grid[i][j1] + grid[i][j2];
+					for(int dc1 = -1; dc1 <= 1; dc1++){
+						for(int dc2 = -1; dc2 <= 1; dc2++){
+							int nc1 = j1 + dc1;
+							int nc2 = j2 + dc2;
+							if(nc1 >= 0 && nc2 >= 0 && nc1 < c && nc2 < c){
+								max = Math.max(max, dp[i+1][nc1][nc2] + curr);															
+							}
+						}
+					}
+					dp[i][j1][j2] = max;
+				}
+			}
+		}
+		return dp[0][0][c-1];
+	}
+
+//space opt
+import java.util.* ;
+import java.io.*; 
+public class Solution {
+	public static int maximumChocolates(int r, int c, int[][] grid) {
+		// Write your code here.
+		// int[][][] dp = new int[r][c][c];
+		int[][] next = new int[c][c];
+		int[][] curr = new int[c][c];
+
+		for(int j1 = 0; j1 < c; j1++){
+			for(int j2 = 0; j2 < c; j2++){
+				if(j1 == j2) next[j1][j2] = grid[r-1][j1];
+				else{
+					next[j1][j2] = grid[r-1][j1] + grid[r-1][j2];
+				}
+			}
+		}
+
+		for(int i = r - 2; i >= 0; i--){
+			for(int j1 = 0; j1 < c; j1++){
+				for(int j2 = 0; j2 < c; j2++){
+                    int max = Integer.MIN_VALUE;
+					curr[j1][j2] = j1 == j2? grid[i][j1] : grid[i][j1] + grid[i][j2];
+					for(int dc1 = -1; dc1 <= 1; dc1++){
+						for(int dc2 = -1; dc2 <= 1; dc2++){
+							int nc1 = j1 + dc1;
+							int nc2 = j2 + dc2;
+							if(nc1 >= 0 && nc2 >= 0 && nc1 < c && nc2 < c){
+								max = Math.max(max, next[nc1][nc2] + curr[j1][j2]);
+							}
+						}
+					}
+					curr[j1][j2] = max;
+				}
+			}
+			for (int j1 = 0; j1 < c; j1++) {
+                for (int j2 = 0; j2 < c; j2++) {
+                    next[j1][j2] = curr[j1][j2];
+                }
+            }
+		}
+		return next[0][c-1];
+	}
+}

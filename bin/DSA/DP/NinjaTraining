@@ -1,0 +1,135 @@
+//code 360:-  Ninja’s Training
+
+//Memozization
+public class Solution {
+    public static int helper(int ind, int last, int[][] points, int[][] dp){
+        if(ind == 0){
+            int max = 0;
+            for(int task = 0; task < 3; task++){
+                if(task == last) continue;
+                max = Math.max(max, points[0][task]);
+            }
+            dp[0][last] = max;
+            return dp[0][last];
+        }
+        if(dp[ind][last] != -1) return dp[ind][last];
+
+        int max = 0;
+        for(int task = 0; task < 3; task++){
+            if(task == last) continue;
+            int merits = points[ind][task] + helper(ind-1, task, points, dp);
+            max = Math.max(max, merits);
+        }
+        dp[ind][last] = max;
+        return dp[ind][last];
+    }
+    public static int ninjaTraining(int n, int points[][]) {
+        int[][] dp = new int[n][4];
+
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < 4; j++){
+                dp[i][j] = -1;
+            }
+        }
+        return helper(n-1, 3, points, dp);
+    }
+
+}
+//Tabulation
+    public static int ninjaTraining(int n, int points[][]) {
+        int[][] dp = new int[n][4];
+        dp[0][0] = Math.max(points[0][1], points[0][2]);
+        dp[0][1] = Math.max(points[0][0], points[0][2]);
+        dp[0][2] = Math.max(points[0][0], points[0][1]);
+        dp[0][3] = Math.max(points[0][0], Math.max(points[0][1], points[0][2])); //only when arr len is 1 or for ans(last ind(n-1))
+
+        for(int day = 1; day < n; day++){
+            for(int next = 0; next < 4; next++){
+                for(int task = 0; task < 3; task++){
+                    if(task == next) continue;
+                    dp[day][next] = Math.max(dp[day][next], points[day][task] + dp[day-1][task]);
+                }
+            }
+        }
+        return dp[n-1][3];
+    }
+//Tabulation(easy one)
+public static int ninjaTraining(int n, int points[][]) {
+        int[][] dp = new int[n][3];
+
+        //base condition
+        dp[0][0] = points[0][0];
+        dp[0][1] = points[0][1];
+        dp[0][2] = points[0][2];
+        
+        int max = 0;
+        for(int day = 1; day < n; day++){
+            for(int task = 0; task < 3; task++){
+                int maxprev = 0;
+                if(task == 0){
+                    maxprev = Math.max(dp[day-1][1], dp[day-1][2]);
+                }
+                else if(task == 1){
+                    maxprev = Math.max(dp[day-1][0], dp[day-1][2]);
+                }
+                else{
+                    maxprev = Math.max(dp[day-1][0], dp[day-1][1]);
+                }
+                dp[day][task] = points[day][task] + maxprev;
+                
+                max = Math.max(max, dp[day][task]);
+            }
+        }
+        return max;
+    }
+
+//Space optimised 
+    public static int ninjaTraining(int n, int points[][]) {
+        int[] prev = new int[4];
+        prev[0] = Math.max(points[0][1], points[0][2]);
+        prev[1] = Math.max(points[0][0], points[0][2]);
+        prev[2] = Math.max(points[0][0], points[0][1]);
+        prev[3] = Math.max(points[0][0], Math.max(points[0][1], points[0][2]));
+
+        for(int day = 1; day < n; day++){
+            int[] temp = new int[4];
+            for(int last = 0; last < 4; last++){
+                for(int task = 0; task < 3; task++){
+                    if(task == last) continue;
+                    temp[last] = Math.max(temp[last], points[day][task] + prev[task]);
+                }
+            }
+            prev = temp;
+        }
+        return prev[3];
+    }
+
+//Space Opt(tabulation ease one version)
+public static int ninjaTraining(int n, int points[][]) {
+        int[] prev = new int[3];
+        prev[0] = points[0][0];
+        prev[1] = points[0][1];
+        prev[2] = points[0][2];        
+        
+        int max = 0;
+        for(int day = 1; day < n; day++){
+            int[] temp = new int[3];
+            for(int task = 0; task < 3; task++){
+                int maxprev = 0;
+                if(task == 0){
+                    maxprev = Math.max(prev[1], prev[2]);
+                }
+                else if(task == 1){
+                    maxprev = Math.max(prev[0], prev[2]);
+                }
+                else{
+                    maxprev = Math.max(prev[0], prev[1]);
+                }
+                temp[task] = points[day][task] + maxprev;                
+                max = Math.max(max, temp[task]);
+            }
+            prev = temp;
+        }
+        return max;
+    }
+
