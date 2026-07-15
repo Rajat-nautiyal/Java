@@ -1,0 +1,74 @@
+GFG:- Flattening a Linked List
+
+//Iterative App;
+class Solution {
+    public Node flatLL(Node temp){
+        Node node = temp;
+        Node head = temp;
+        while(node != null){
+            node.next = node.bottom;
+            node = node.next;
+        }
+        return head;
+    }
+    public Node merge(Node l1, Node l2){
+        Node dummyNode = new Node(-1);
+        Node temp = dummyNode;
+        while(l1 != null && l2 != null){
+            if(l1.data <= l2.data){
+                temp.bottom = l1;
+                l1 = l1.bottom;
+                temp = temp.bottom;
+            }else{
+                temp.bottom = l2;
+                l2 = l2.bottom;
+                temp = temp.bottom;
+            }
+        }
+        if(l1 == null) temp.bottom = l2;
+        else temp.bottom = l1;
+        return dummyNode.bottom; 
+    }
+    public Node flatten(Node root) {
+        // code here
+        if(root == null) return root;
+        
+        Node prev = root;
+        Node curr = root.next;
+        while(curr != null){
+            Node node = merge(prev, curr); //gives sorted vertical order LL
+            prev = node;m //sorted head
+            curr = curr.next;
+        }
+        return flatLL(prev); //No need to flat LL(horizontal) in gfg
+    }
+}
+
+//Recursion Approach
+    public Node merge(Node l1, Node l2){
+        Node dummyNode = new Node(-1);
+        Node temp = dummyNode;
+        while(l1 != null && l2 != null){
+            if(l1.data <= l2.data){
+                temp.bottom = l1;
+                l1 = l1.bottom;
+                temp = temp.bottom;
+            }else{
+                temp.bottom = l2;
+                l2 = l2.bottom;
+                temp = temp.bottom;
+            }
+        }
+        if(l1 == null) temp.bottom = l2;
+        else temp.bottom = l1;
+        return dummyNode.bottom;
+    }
+    
+    public Node flatten(Node root) {
+        if(root == null) return root;
+        
+        Node mergedHead = flatten(root.next);
+        Node sh = merge(root, mergedHead);
+        
+        return sh;
+    }

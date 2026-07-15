@@ -1,0 +1,936 @@
+<!-- 2035. Partition Array Into Two Arrays to Minimize Sum Difference -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meet‑in‑the‑Middle · Multiple Examples</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0b0e1a;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e6f0;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: #131827;
+            border-radius: 28px;
+            padding: 28px 30px 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 30px 70px rgba(0,0,0,0.7);
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+        h1 small {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: #64ffda;
+            background: rgba(100,255,218,0.07);
+            padding: 2px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(100,255,218,0.1);
+        }
+        .core-idea {
+            background: #0d1322;
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin: 10px 0 18px;
+            border-left: 4px solid #64ffda;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: #b0c4de;
+        }
+        .core-idea strong { color: #fff; }
+        .core-idea code {
+            background: #1a2238;
+            padding: 2px 10px;
+            border-radius: 6px;
+            color: #64ffda;
+            font-size: 0.9rem;
+        }
+
+        .example-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .example-selector button {
+            padding: 8px 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 30px;
+            background: rgba(255,255,255,0.03);
+            color: #b0c4de;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .example-selector button:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+        .example-selector button.active {
+            border-color: #64ffda;
+            background: rgba(100,255,218,0.15);
+            color: #64ffda;
+        }
+
+        .array-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 0 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .arr-box {
+            width: 48px;
+            height: 52px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: #1a2238;
+            color: #fff;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transition: 0.2s;
+        }
+        .arr-box.left { border-bottom: 3px solid #64ffda; }
+        .arr-box.right { border-bottom: 3px solid #ff6b6b; }
+        .arr-box .idx-label {
+            position: absolute;
+            top: -18px;
+            font-size: 0.6rem;
+            color: #68728c;
+        }
+        .arr-box.chosen { box-shadow: 0 0 0 2px #fdcb6e, 0 0 20px rgba(253,203,110,0.15); }
+        .split-marker { width: 2px; background: rgba(255,255,255,0.08); margin: 0 4px; }
+
+        .columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 16px 0 14px;
+        }
+        @media (max-width: 750px) { .columns { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: rgba(255,255,255,0.02);
+            border-radius: 14px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .panel h3 {
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: #8899bb;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .panel h3 span { color: #64ffda; font-weight: 500; }
+
+        .subset-list {
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding-right: 4px;
+        }
+        .subset-list::-webkit-scrollbar { width: 4px; background: transparent; }
+        .subset-list::-webkit-scrollbar-thumb { background: #2a3452; border-radius: 10px; }
+
+        .subset-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.02);
+            font-size: 0.85rem;
+            transition: 0.2s;
+            border-left: 2px solid transparent;
+            align-items: center;
+        }
+        .subset-row .mask { color: #68728c; font-family: monospace; font-size: 0.7rem; }
+        .subset-row .sum { font-weight: 600; }
+        .subset-row.active-left { background: rgba(100,255,218,0.15); border-left-color: #64ffda; }
+
+        /* === ORANGE GLOW for ALL candidates (right subsets that match the required size) === */
+        .subset-row.candidate-glow {
+            background: rgba(253, 203, 110, 0.18);
+            border-left-color: #fdcb6e;
+            box-shadow: 0 0 20px rgba(253, 203, 110, 0.15);
+        }
+        /* Best match - subtle gold when finalized (for both left and right) */
+        .subset-row.best-match {
+            background: rgba(253, 203, 110, 0.20);
+            border-left-color: #fdcb6e;
+            box-shadow: 0 0 25px rgba(253, 203, 110, 0.25);
+        }
+        .subset-row .elts { color: #b0c4de; font-size: 0.7rem; }
+
+        .bs-section {
+            background: #101624;
+            border-radius: 12px;
+            padding: 14px 12px 18px;
+            border: 1px solid rgba(255,255,255,0.04);
+            margin-top: 12px;
+        }
+        .bs-section h4 {
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: #68728c;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .bs-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            padding: 6px 0;
+        }
+        .bs-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 44px;
+        }
+        .bs-item .box {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 600;
+            background: #1e2740;
+            color: #c8d6e5;
+            transition: 0.25s;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .bs-item .box.low { border-color: #6c5ce7; background: #2a2355; color: #a29bfe; }
+        .bs-item .box.high { border-color: #ff6b6b; background: #4a1a1a; color: #ff8787; }
+        .bs-item .box.mid { border-color: #fdcb6e; background: #3d351a; color: #fdcb6e; box-shadow: 0 0 30px rgba(253,203,110,0.25); transform: scale(1.08); }
+        .bs-item .box.best { border-color: #64ffda; background: #0f2e2a; color: #64ffda; }
+        .bs-item .box.inactive { opacity: 0.20; }
+        .bs-item .box.candidate {
+            border-color: rgba(253, 203, 110, 0.5);
+            background: rgba(253, 203, 110, 0.08);
+        }
+        .bs-item .ptr {
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-top: 4px;
+            height: 18px;
+            color: #68728c;
+        }
+        .bs-item .ptr.low-ptr { color: #a29bfe; }
+        .bs-item .ptr.high-ptr { color: #ff8787; }
+        .bs-item .ptr.mid-ptr { color: #fdcb6e; }
+        .arrow-down {
+            width: 0; height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 10px solid currentColor;
+            margin: 0 auto 2px;
+            opacity: 0.8;
+        }
+
+        .explanation-box {
+            background: #0d1322;
+            border-radius: 12px;
+            padding: 16px 22px;
+            min-height: 64px;
+            border-left: 4px solid #fdcb6e;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #c8d6e5;
+            margin: 14px 0 18px;
+        }
+        .explanation-box strong { color: #fff; }
+        .explanation-box .hl { color: #fdcb6e; font-weight: 600; }
+        .explanation-box .hlg { color: #64ffda; font-weight: 600; }
+        .explanation-box .hlr { color: #ff6b6b; font-weight: 600; }
+
+        .info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 10px 0 4px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            margin-top: 6px;
+            font-size: 0.9rem;
+            color: #8899bb;
+        }
+        .info-bar .stat { display: flex; gap: 8px; align-items: baseline; }
+        .info-bar .stat .val { font-weight: 600; color: #e0e6f0; }
+        .val.gold { color: #fdcb6e; }
+        .val.green { color: #64ffda; }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 6px;
+        }
+        .controls button {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #1e2740;
+            color: #c8d6e5;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .controls button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.5); }
+        .controls button.danger { background: #ff6b6b; color: #0b0e1a; }
+        .controls button.danger:hover { background: #ff8787; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        ⚡ Meet‑in‑the‑Middle
+        <small>LeetCode 2035 · Multiple Examples</small>
+    </h1>
+
+    <div class="example-selector" id="exampleSelector">
+        <button data-arr="[11,5,1,5]" class="active">[11,5,1,5]</button>
+        <button data-arr="[3,9,7,3]">[3,9,7,3]</button>
+        <button data-arr="[-36,36]">[-36,36]</button>
+        <button data-arr="[1,2,3,4,5,6]">[1,2,3,4,5,6]</button>
+    </div>
+
+    <div class="core-idea">
+        <strong>💡 Core idea (step by step):</strong><br>
+        1. Split <code>nums</code> into <strong>left</strong> and <strong>right</strong> halves.<br>
+        2. Generate all subset sums for each half, <strong>grouped by the number of elements</strong> chosen.<br>
+        3. For each left subset with <code>k</code> elements, the right subset must have <code>n - k</code> elements.<br>
+        4. In the right group, <strong>binary search</strong> for the sum closest to <code>total/2 - leftSum</code>.<br>
+        5. Update answer with <code>abs(total - 2 * (leftSum + rightSum))</code> &amp; check it's minimum or not.
+    </div>
+
+    <div class="array-row" id="arrayRow"></div>
+
+    <div class="columns">
+        <div class="panel">
+            <h3>🔹 Left subsets <span id="leftCount">0</span></h3>
+            <div class="subset-list" id="leftList"></div>
+        </div>
+        <div class="panel">
+            <h3>🔸 Right subsets <span id="rightCount">0</span></h3>
+            <div class="subset-list" id="rightList"></div>
+            <div class="bs-section">
+                <h4>🔎 Binary search on sorted right subsets</h4>
+                <div class="bs-row" id="bsRow"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="explanation-box" id="explanationText">⏳ Click <strong>Step</strong> to start the algorithm.</div>
+
+    <div class="info-bar">
+        <div class="stat"><span>Best diff</span><span class="val gold" id="bestDiffDisplay">∞</span></div>
+        <div class="stat"><span>Comparisons</span><span class="val" id="comparisonsDisplay">0</span></div>
+        <div class="stat"><span>Step</span><span class="val" id="stepDisplay">0</span></div>
+        <div class="stat"><span>Phase</span><span class="val" id="phaseDisplay">Idle</span></div>
+    </div>
+
+    <div class="controls">
+        <button id="prevBtn" disabled>◀ Prev</button>
+        <button class="danger" id="resetBtn">⟳ Reset</button>
+        <button id="stepBtn">⏭ Step</button>
+    </div>
+</div>
+
+<script>
+    // ================================================================
+    //  DATA & EXAMPLES
+    // ================================================================
+    const EXAMPLES = {
+        '[11,5,1,5]': [11, 5, 1, 5],
+        '[3,9,7,3]': [3, 9, 7, 3],
+        '[-36,36]': [-36, 36],
+        '[1,2,3,4,5,6]': [1, 2, 3, 4, 5, 6]
+    };
+
+    let currentArr = [11, 5, 1, 5];
+
+    function genSubsets(nums) {
+        const res = [];
+        const m = nums.length;
+        for (let mask = 0; mask < (1 << m); mask++) {
+            let sum = 0;
+            const idx = [];
+            for (let i = 0; i < m; i++) {
+                if (mask & (1 << i)) { sum += nums[i]; idx.push(i); }
+            }
+            res.push({ sum, mask, selected: idx });
+        }
+        return res;
+    }
+
+    let arr = currentArr;
+    let n = arr.length / 2;
+    let leftHalf = arr.slice(0, n);
+    let rightHalf = arr.slice(n);
+    let totalSum = arr.reduce((a, b) => a + b, 0);
+    let leftSubsets = genSubsets(leftHalf);
+    let rightSubsets = genSubsets(rightHalf);
+    let sortedRight = rightSubsets.map(s => ({ ...s })).sort((a, b) => a.sum - b.sum);
+
+    // ================================================================
+    //  STATE
+    // ================================================================
+    let history = [];
+    let historyIndex = -1;
+
+    let state = {
+        phase: 0,
+        leftIdx: 0,
+        low: 0,
+        high: 0,
+        mid: -1,
+        bestRightIdx: -1,
+        bestLeftIdx: -1,      // tracks which left subset gave the best answer
+        bestDiff: Infinity,
+        subStep: 0,
+        candList: [],
+        candLow: 0,
+        candHigh: 0,
+        bestCandIdx: -1,
+        bestLocalDiff: Infinity,
+        done: false,
+        stepCounter: 0,
+        explanation: ''
+    };
+
+    // DOM refs
+    const arrayRow = document.getElementById('arrayRow');
+    const leftList = document.getElementById('leftList');
+    const rightList = document.getElementById('rightList');
+    const bsRow = document.getElementById('bsRow');
+    const leftCount = document.getElementById('leftCount');
+    const rightCount = document.getElementById('rightCount');
+    const bestDiffDisplay = document.getElementById('bestDiffDisplay');
+    const comparisonsDisplay = document.getElementById('comparisonsDisplay');
+    const stepDisplay = document.getElementById('stepDisplay');
+    const phaseDisplay = document.getElementById('phaseDisplay');
+    const explanationText = document.getElementById('explanationText');
+    const resetBtn = document.getElementById('resetBtn');
+    const stepBtn = document.getElementById('stepBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const exampleSelector = document.getElementById('exampleSelector');
+
+    // ================================================================
+    //  RENDER
+    // ================================================================
+    function renderArray() {
+        arrayRow.innerHTML = '';
+        arr.forEach((val, i) => {
+            const div = document.createElement('div');
+            div.className = `arr-box ${i < n ? 'left' : 'right'}`;
+            div.textContent = val;
+            const idx = document.createElement('span');
+            idx.className = 'idx-label';
+            idx.textContent = i;
+            div.appendChild(idx);
+            arrayRow.appendChild(div);
+            if (i === n - 1) {
+                const marker = document.createElement('div');
+                marker.className = 'split-marker';
+                arrayRow.appendChild(marker);
+            }
+        });
+    }
+
+    function isCandidate(s) {
+        if (!state.candList || state.candList.length === 0) return false;
+        return state.candList.some(c => c.mask === s.mask && c.sum === s.sum);
+    }
+
+    function renderSubsets() {
+        // Left list — now with best-left highlighting
+        leftList.innerHTML = '';
+        leftSubsets.forEach((s, i) => {
+            const row = document.createElement('div');
+            row.className = 'subset-row';
+            if (i === state.leftIdx && state.phase === 4) row.classList.add('active-left');
+            // ★ NEW: highlight the left subset that gave the best answer
+            if (state.phase === 5 && i === state.bestLeftIdx) {
+                row.classList.add('best-match');
+            }
+            const elts = s.selected.map(idx => leftHalf[idx]).join(',') || '∅';
+            row.innerHTML = `<span class="elts">{${elts}}</span><span class="sum">${s.sum}</span><span class="mask">#${i}</span>`;
+            leftList.appendChild(row);
+        });
+        leftCount.textContent = leftSubsets.length;
+
+        // Right list
+        rightList.innerHTML = '';
+        sortedRight.forEach((s, i) => {
+            const row = document.createElement('div');
+            row.className = 'subset-row';
+            
+            if (state.phase === 4 && !state.done && isCandidate(s)) {
+                row.classList.add('candidate-glow');
+            }
+            if ((state.phase === 4 && state.subStep === 4 && i === state.bestRightIdx) ||
+                (state.phase === 5 && i === state.bestRightIdx)) {
+                row.classList.add('best-match');
+            }
+            
+            const elts = s.selected.map(idx => rightHalf[idx]).join(',') || '∅';
+            row.innerHTML = `<span class="elts">{${elts}}</span><span class="sum">${s.sum}</span><span class="mask">#${i}</span>`;
+            rightList.appendChild(row);
+        });
+        rightCount.textContent = sortedRight.length;
+    }
+
+    function renderBS() {
+        bsRow.innerHTML = '';
+        if (sortedRight.length === 0) return;
+        const low = state.low, high = state.high, mid = state.mid;
+        const bestIdx = state.bestRightIdx;
+
+        sortedRight.forEach((s, idx) => {
+            const item = document.createElement('div');
+            item.className = 'bs-item';
+            const box = document.createElement('div');
+            box.className = 'box';
+            box.textContent = s.sum;
+
+            const isCand = state.phase === 4 && isCandidate(s);
+
+            if (state.phase === 4 && !state.done) {
+                if (idx >= low && idx <= high) {
+                    if (idx === low) box.classList.add('low');
+                    else if (idx === high) box.classList.add('high');
+                    else if (idx === mid && state.subStep >= 1) box.classList.add('mid');
+                } else {
+                    if (!isCand) box.classList.add('inactive');
+                }
+                if (idx === bestIdx && state.subStep === 4) {
+                    box.classList.add('best');
+                }
+                if (isCand) box.classList.add('candidate');
+            } else if (state.phase === 5) {
+                if (idx === bestIdx) box.classList.add('best');
+                else box.classList.add('inactive');
+            } else {
+                box.classList.add('inactive');
+            }
+            item.appendChild(box);
+
+            const ptr = document.createElement('div');
+            ptr.className = 'ptr';
+            if (state.phase === 4 && !state.done && state.subStep >= 1) {
+                if (idx === mid) {
+                    ptr.className += ' mid-ptr';
+                    ptr.innerHTML = `<div class="arrow-down" style="color:#fdcb6e;"></div>MID`;
+                } else if (idx === low) {
+                    ptr.className += ' low-ptr';
+                    ptr.innerHTML = `<div class="arrow-down" style="color:#a29bfe;"></div>LOW`;
+                } else if (idx === high) {
+                    ptr.className += ' high-ptr';
+                    ptr.innerHTML = `<div class="arrow-down" style="color:#ff8787;"></div>HIGH`;
+                }
+            }
+            item.appendChild(ptr);
+            bsRow.appendChild(item);
+        });
+    }
+
+    function updateInfo() {
+        bestDiffDisplay.textContent = state.bestDiff === Infinity ? '∞' : state.bestDiff;
+        comparisonsDisplay.textContent = state.stepCounter;
+        stepDisplay.textContent = state.stepCounter;
+        const phaseNames = ['Idle', 'Split', 'Subsets', 'Sort', 'Search', 'Done'];
+        phaseDisplay.textContent = phaseNames[state.phase] || '';
+    }
+
+    function renderAll() {
+        renderArray();
+        renderSubsets();
+        renderBS();
+        updateInfo();
+        if (state.explanation) explanationText.innerHTML = state.explanation;
+    }
+
+    // ================================================================
+    //  HELPER: find index in sortedRight by mask
+    // ================================================================
+    function findIndexByMask(mask) {
+        return sortedRight.findIndex(item => item.mask === mask);
+    }
+
+    // ================================================================
+    //  STEP MACHINE
+    // ================================================================
+    function computeNextState(s) {
+        let ns = JSON.parse(JSON.stringify(s));
+        if (ns.bestDiff === null) ns.bestDiff = Infinity;
+        if (ns.bestLocalDiff === null) ns.bestLocalDiff = Infinity;
+
+        if (ns.phase === 0) {
+            ns.phase = 1;
+            ns.explanation = `📌 <strong>Phase 1:</strong> Split array into two halves of size ${n}.`;
+            return ns;
+        }
+        if (ns.phase === 1) {
+            ns.phase = 2;
+            ns.explanation = `🔢 <strong>Phase 2:</strong> Generate all 2ⁿ = ${Math.pow(2, n)} subset sums for each half.`;
+            return ns;
+        }
+        if (ns.phase === 2) {
+            ns.phase = 3;
+            ns.explanation = `📊 <strong>Phase 3:</strong> Sort right subset sums for binary search.`;
+            return ns;
+        }
+        if (ns.phase === 3) {
+            ns.phase = 4;
+            ns.leftIdx = 0;
+            ns.bestDiff = Infinity;
+            ns.bestRightIdx = -1;
+            ns.bestLeftIdx = -1;
+            ns.done = false;
+            ns.subStep = 0;
+            ns.stepCounter = 0;
+            ns.bestLocalDiff = Infinity;
+            ns.bestCandIdx = -1;
+            return initLeftSubset(ns);
+        }
+
+        if (ns.phase === 4 && !ns.done) {
+            if (ns.leftIdx >= leftSubsets.length) {
+                ns.phase = 5;
+                ns.done = true;
+                const finalDiff = ns.bestDiff === Infinity ? '∞' : ns.bestDiff;
+                ns.explanation = `🎉 <strong>All left subsets processed!</strong> Final answer = <span class="hlg">${finalDiff}</span>.`;
+                return ns;
+            }
+
+            const left = leftSubsets[ns.leftIdx];
+            const needSize = n - left.selected.length;
+
+            if (needSize < 0 || needSize > n) {
+                ns.leftIdx++;
+                ns.subStep = 0;
+                ns.mid = -1;
+                ns.bestLocalDiff = Infinity;
+                ns.bestCandIdx = -1;
+                ns.candList = [];
+                ns.low = 0;
+                ns.high = sortedRight.length - 1;
+                ns.explanation = `⏭️ Skipping left #${ns.leftIdx-1} (size ${left.selected.length}) – cannot form a valid partition.`;
+                return ns;
+            }
+
+            const candidates = sortedRight.filter(item => item.selected.length === needSize);
+            if (candidates.length === 0) {
+                ns.leftIdx++;
+                ns.subStep = 0;
+                ns.mid = -1;
+                ns.bestLocalDiff = Infinity;
+                ns.bestCandIdx = -1;
+                ns.candList = [];
+                ns.low = 0;
+                ns.high = sortedRight.length - 1;
+                ns.explanation = `⏭️ No right subset of size ${needSize} for left #${ns.leftIdx-1}. Skipping.`;
+                return ns;
+            }
+
+            // Granular substeps
+            if (ns.subStep === 0) {
+                ns.candList = candidates;
+                ns.candLow = 0;
+                ns.candHigh = candidates.length - 1;
+                ns.bestCandIdx = -1;
+                ns.bestLocalDiff = Infinity;
+                ns.mid = -1;
+                ns.low = findIndexByMask(candidates[0].mask);
+                ns.high = findIndexByMask(candidates[candidates.length - 1].mask);
+                ns.subStep = 1;
+                ns.stepCounter++;
+                ns.explanation =
+                    `🔎 <strong>Step ${ns.stepCounter}:</strong> Left #${ns.leftIdx} (sum <span class="hl">${left.sum}</span>) → need right size ${needSize}. ` +
+                    `${candidates.length} candidates found. Range: [${ns.low} .. ${ns.high}].`;
+                return ns;
+            }
+
+            if (ns.subStep === 1) {
+                if (ns.candLow > ns.candHigh) {
+                    ns.subStep = 4;
+                    const bestLocal = ns.bestLocalDiff === Infinity ? '∞' : ns.bestLocalDiff;
+                    ns.explanation =
+                        `📐 <span class="hl">Range collapsed!</span> low > high. Best for this left = ${bestLocal}. Finalizing...`;
+                    return ns;
+                }
+                const midCandIdx = Math.floor((ns.candLow + ns.candHigh) / 2);
+                const midCand = ns.candList[midCandIdx];
+                ns.mid = findIndexByMask(midCand.mask);
+                ns.low = findIndexByMask(ns.candList[ns.candLow].mask);
+                ns.high = findIndexByMask(ns.candList[ns.candHigh].mask);
+                ns.subStep = 2;
+                ns.stepCounter++;
+                ns.explanation =
+                    `🎯 <strong>Step ${ns.stepCounter}:</strong> Pick <span class="hl">mid = ${ns.mid}</span> (sum ${midCand.sum}). ` +
+                    `Target for right sum = ${(totalSum/2 - left.sum).toFixed(2)}.`;
+                return ns;
+            }
+
+            if (ns.subStep === 2) {
+                const midCand = ns.candList[Math.floor((ns.candLow + ns.candHigh) / 2)];
+                const targetRight = totalSum / 2 - left.sum;
+                const totalDiff = Math.abs((left.sum + midCand.sum) - (totalSum - left.sum - midCand.sum));
+
+                if (totalDiff < ns.bestLocalDiff) {
+                    ns.bestLocalDiff = totalDiff;
+                    ns.bestCandIdx = Math.floor((ns.candLow + ns.candHigh) / 2);
+                }
+
+                let compareText = '';
+                if (midCand.sum < targetRight) {
+                    compareText = `${midCand.sum} < ${targetRight.toFixed(2)} → we need a <span class="hl">larger</span> sum.`;
+                } else {
+                    compareText = `${midCand.sum} > ${targetRight.toFixed(2)} → we need a <span class="hl">smaller</span> sum.`;
+                }
+                ns.subStep = 3;
+                ns.stepCounter++;
+                const bestLocal = ns.bestLocalDiff === Infinity ? '∞' : ns.bestLocalDiff;
+                ns.explanation =
+                    `⚖️ <strong>Step ${ns.stepCounter}:</strong> Compare. ${compareText} ` +
+                    `Current best for this left = <span class="hlg">${bestLocal}</span>.`;
+                return ns;
+            }
+
+            if (ns.subStep === 3) {
+                const midCand = ns.candList[Math.floor((ns.candLow + ns.candHigh) / 2)];
+                const targetRight = totalSum / 2 - left.sum;
+                if (midCand.sum < targetRight) {
+                    ns.candLow = Math.floor((ns.candLow + ns.candHigh) / 2) + 1;
+                } else {
+                    ns.candHigh = Math.floor((ns.candLow + ns.candHigh) / 2) - 1;
+                }
+                ns.subStep = 1;
+                ns.stepCounter++;
+                if (ns.candLow < ns.candList.length) {
+                    ns.low = findIndexByMask(ns.candList[ns.candLow].mask);
+                }
+                if (ns.candHigh >= 0) {
+                    ns.high = findIndexByMask(ns.candList[ns.candHigh].mask);
+                }
+                if (ns.candLow > ns.candHigh) {
+                    ns.subStep = 4;
+                    const bestLocal = ns.bestLocalDiff === Infinity ? '∞' : ns.bestLocalDiff;
+                    ns.explanation =
+                        `📐 <strong>Step ${ns.stepCounter}:</strong> Range collapsed! <span class="hl">low > high</span>. ` +
+                        `Best for this left = ${bestLocal}. Finalizing...`;
+                } else {
+                    ns.explanation =
+                        `📐 <strong>Step ${ns.stepCounter}:</strong> Shrink range. ` +
+                        `New range: [<span class="hl">${ns.low}</span> .. <span class="hlr">${ns.high}</span>].`;
+                }
+                return ns;
+            }
+
+            if (ns.subStep === 4) {
+                if (ns.bestCandIdx !== -1) {
+                    const bestCand = ns.candList[ns.bestCandIdx];
+                    const totalDiff = Math.abs((left.sum + bestCand.sum) - (totalSum - left.sum - bestCand.sum));
+                    if (totalDiff < ns.bestDiff) {
+                        ns.bestDiff = totalDiff;
+                        ns.bestRightIdx = findIndexByMask(bestCand.mask);
+                        ns.bestLeftIdx = ns.leftIdx;   // ★ remember which left subset gave this best answer
+                    }
+                    ns.stepCounter++;
+                    ns.explanation =
+                        `✅ <strong>Step ${ns.stepCounter}:</strong> Left #${ns.leftIdx} complete! ` +
+                        `Best right sum = ${bestCand.sum}. Global best diff = <span class="hlg">${ns.bestDiff}</span>.`;
+                } else {
+                    ns.explanation = `⏭️ Left #${ns.leftIdx} had no valid match.`;
+                }
+                ns.leftIdx++;
+                ns.subStep = 0;
+                ns.mid = -1;
+                ns.bestLocalDiff = Infinity;
+                ns.bestCandIdx = -1;
+                ns.candList = [];
+                ns.low = 0;
+                ns.high = sortedRight.length - 1;
+                return ns;
+            }
+        }
+
+        if (ns.phase === 5) {
+            const finalDiff = ns.bestDiff === Infinity ? '∞' : ns.bestDiff;
+            ns.explanation = `✅ <strong>Done!</strong> Minimum difference = <span class="hlg">${finalDiff}</span>.`;
+            return ns;
+        }
+
+        return null;
+    }
+
+    function initLeftSubset(s) {
+        s.subStep = 0;
+        s.mid = -1;
+        s.bestLocalDiff = Infinity;
+        s.bestCandIdx = -1;
+        s.candList = [];
+        s.low = 0;
+        s.high = sortedRight.length - 1;
+        s.explanation = `🔍 Starting search for left #${s.leftIdx} (sum ${leftSubsets[s.leftIdx].sum}).`;
+        return s;
+    }
+
+    // ================================================================
+    //  HISTORY MANAGEMENT
+    // ================================================================
+    function pushState(s) {
+        if (historyIndex < history.length - 1) {
+            history = history.slice(0, historyIndex + 1);
+        }
+        history.push(JSON.parse(JSON.stringify(s)));
+        historyIndex = history.length - 1;
+        applyState(history[historyIndex]);
+        updateButtons();
+    }
+
+    function applyState(s) {
+        state = JSON.parse(JSON.stringify(s));
+        if (state.bestDiff === null) state.bestDiff = Infinity;
+        if (state.bestLocalDiff === null) state.bestLocalDiff = Infinity;
+        renderAll();
+        explanationText.innerHTML = state.explanation;
+        updateButtons();
+    }
+
+    function goTo(index) {
+        if (index < 0 || index >= history.length) return;
+        historyIndex = index;
+        applyState(history[index]);
+        updateButtons();
+    }
+
+    function updateButtons() {
+        prevBtn.disabled = (historyIndex <= 0);
+    }
+
+    // ================================================================
+    //  CONTROLS
+    // ================================================================
+    function stepForward() {
+        if (state.phase === 5 && historyIndex === history.length - 1) return;
+        if (historyIndex < history.length - 1) {
+            goTo(historyIndex + 1);
+            return;
+        }
+        const next = computeNextState(state);
+        if (next) pushState(next);
+    }
+
+    function stepBack() {
+        if (historyIndex > 0) goTo(historyIndex - 1);
+    }
+
+    function resetAll() {
+        history = [];
+        historyIndex = -1;
+        state = {
+            phase: 0,
+            leftIdx: 0,
+            low: 0,
+            high: 0,
+            mid: -1,
+            bestRightIdx: -1,
+            bestLeftIdx: -1,
+            bestDiff: Infinity,
+            subStep: 0,
+            candList: [],
+            candLow: 0,
+            candHigh: 0,
+            bestCandIdx: -1,
+            bestLocalDiff: Infinity,
+            done: false,
+            stepCounter: 0,
+            explanation: '⏳ Click <strong>Step</strong> to start the algorithm.'
+        };
+        renderAll();
+        explanationText.innerHTML = state.explanation;
+        updateButtons();
+    }
+
+    // ================================================================
+    //  SWITCH EXAMPLE
+    // ================================================================
+    function setExample(arrStr) {
+        arr = EXAMPLES[arrStr];
+        n = arr.length / 2;
+        leftHalf = arr.slice(0, n);
+        rightHalf = arr.slice(n);
+        totalSum = arr.reduce((a, b) => a + b, 0);
+        leftSubsets = genSubsets(leftHalf);
+        rightSubsets = genSubsets(rightHalf);
+        sortedRight = rightSubsets.map(s => ({ ...s })).sort((a, b) => a.sum - b.sum);
+
+        resetAll();
+
+        document.querySelectorAll('.example-selector button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.arr === arrStr);
+        });
+    }
+
+    // ================================================================
+    //  INIT
+    // ================================================================
+    document.querySelector('.example-selector button[data-arr="[11,5,1,5]"]').classList.add('active');
+    setExample('[11,5,1,5]');
+
+    document.querySelectorAll('.example-selector button').forEach(btn => {
+        btn.addEventListener('click', () => setExample(btn.dataset.arr));
+    });
+
+    resetBtn.addEventListener('click', resetAll);
+    stepBtn.addEventListener('click', stepForward);
+    prevBtn.addEventListener('click', stepBack);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'r' || e.key === 'R') resetAll();
+        if (e.key === 'ArrowRight') stepForward();
+        if (e.key === 'ArrowLeft') stepBack();
+    });
+</script>
+</body>
+</html>

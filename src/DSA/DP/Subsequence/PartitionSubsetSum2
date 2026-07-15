@@ -1,0 +1,71 @@
+2035. Partition Array Into Two Arrays to Minimize Sum Difference
+
+//IDEA and Animation exist(ManintheMiddle.html)
+
+class Solution {
+public int minimumDifference(int[] nums) {
+    int n = nums.length;
+    int half = n / 2;
+    int total = 0;
+    for (int num : nums) total += num;
+
+    // Generate sums for left half grouped by count
+    List<Integer>[] leftSums = new List[half + 1];
+    List<Integer>[] rightSums = new List[half + 1];
+    for (int i = 0; i <= half; i++) {
+        leftSums[i] = new ArrayList<>();
+        rightSums[i] = new ArrayList<>();
+    }
+
+    // Generate all subsets for the left half
+    for (int mask = 0; mask < (1 << half); mask++) {
+        int sum = 0, count = 0;
+        for (int i = 0; i < half; i++) {
+            if ((mask & (1 << i)) != 0) {
+                sum += nums[i];
+                count++;
+            }
+        }
+        leftSums[count].add(sum);
+    }
+
+    // Generate all subsets for the right half
+    for (int mask = 0; mask < (1 << half); mask++) {
+        int sum = 0, count = 0;
+        for (int i = 0; i < half; i++) {
+            if ((mask & (1 << i)) != 0) {
+                sum += nums[half + i];
+                count++;
+            }
+        }
+        rightSums[count].add(sum);
+    }
+
+    // Sort right sums for binary search
+    for (int i = 0; i <= half; i++) {
+        Collections.sort(rightSums[i]);
+    }
+
+    int ans = Integer.MAX_VALUE;
+    for (int c1 = 0; c1 <= half; c1++) {
+        int c2 = half - c1; // we need total half elements
+        for (int sumL : leftSums[c1]) {
+            int target = total / 2 - sumL;
+            List<Integer> list = rightSums[c2];
+            int idx = Collections.binarySearch(list, target);
+            if (idx < 0) idx = -idx - 1; //if target not found but idx gives -ve insertion point
+            
+            //check front
+            if (idx < list.size()) {
+                int sumR = list.get(idx);
+                ans = Math.min(ans, Math.abs(total - 2 * (sumL + sumR)));
+            }
+            // Check prev
+            if (idx > 0) {
+                int sumR = list.get(idx - 1);
+                ans = Math.min(ans, Math.abs(total - 2 * (sumL + sumR)));
+            }
+        }
+    }
+    return ans;
+}}

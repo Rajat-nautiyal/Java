@@ -1,0 +1,102 @@
+Subset Sum Problem
+
+//Brute App: TC: - O(2^n) SC: O(n)
+class Solution {
+    static boolean helper(int i, int sum, int[] arr){
+        if(sum == 0) return true;
+        if(i < 0) return false;
+        
+        if(dp[i][sum] == 1) return true;
+        if(dp[i][sum] == 2) return false;
+        
+        boolean notTake = helper(i - 1, sum, arr);
+        boolean take = false;
+        
+        if(sum - arr[i] >= 0){
+            take = helper(i-1, sum - arr[i], arr);
+        }
+        
+        return take || notTake;
+    }
+    static boolean isSubsetSum(int arr[], int sum) {
+        // code here
+        return helper(arr.length - 1, sum, arr);
+    }
+}
+
+//Memo Approach: TC :- O(n*k) SC: O(n*k + n);
+class Solution {
+    static boolean helper(int i, int sum, int[] arr, int[][] dp){
+        if(sum == 0) return true;
+        if(i < 0) return false;
+        
+        if(dp[i][sum] == 1) return true;
+        if(dp[i][sum] == 2) return false;
+        
+        boolean notTake = helper(i - 1, sum, arr, dp);
+        boolean take = false;
+        
+        if(sum - arr[i] >= 0){
+            take = helper(i-1, sum - arr[i], arr, dp);
+        }
+        
+        dp[i][sum] = take || notTake ? 1 : 2;
+        return take || notTake;
+    }
+    static boolean isSubsetSum(int arr[], int sum) {
+        // code here
+        int[][] dp = new int[arr.length][sum+1];
+        return helper(arr.length - 1, sum, arr, dp);
+    }
+}
+
+//Tabulation Approach  TC :- O(n*k) SC: O(n*k);
+    static boolean isSubsetSum(int arr[], int sum) {
+        int n = arr.length;
+        int[][] dp = new int[n][sum+1]; //dp[i][j] = True (or 1) if we can achieve a sum exactly equal to j by using any subset of the elements from index 0 to i
+        //base case
+        for(int i = 0; i < n; i++){
+            dp[i][0] = 1; //true
+        }
+        if(arr[0] <= sum) { //Edge case, eg [11, 48, 24] k = 83
+            dp[0][arr[0]] = 1;
+        }
+        for(int i = 1; i < n; i++){
+            for(int target = 1; target <= sum; target++){
+                int notTake = dp[i-1][target];
+                int take = 2; //false
+                
+                if(target - arr[i] >= 0){
+                    take = dp[i-1][target - arr[i]];
+                }
+                dp[i][target] = (notTake == 1 || take == 1)? 1 : 2;
+            }
+        }
+        return (dp[n-1][sum] == 1);
+    }
+
+//Space Opt TC :- O(n*k) SC: O(2k);
+    static boolean isSubsetSum(int arr[], int sum) {
+        int n = arr.length;
+        int[] prev = new int[sum+1];
+        prev[0] = 1; //true
+        if(arr[0] <= sum){
+            prev[arr[0]] = 1;
+        }
+        
+        for(int i = 1; i < n; i++){
+            int[] curr = new int[sum+1];
+            curr[0] = 1;
+            for(int target = 1; target <= sum; target++){
+                int notTake = prev[target];
+                int take = 2; //false
+                
+                if(target - arr[i] >= 0){
+                    take = prev[target - arr[i]];
+                }
+                curr[target] = (notTake == 1 || take == 1)? 1 : 2;
+            }
+            prev = curr;
+        }
+        return (prev[sum] == 1);
+    }
