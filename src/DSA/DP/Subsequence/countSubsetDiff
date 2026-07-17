@@ -1,0 +1,111 @@
+gfg:- Partitions with Given Difference
+
+//Idea :- Same as Count subset sum
+ //s1 + s2 = totsum and s1 - s2 = d (Given in q)
+ //s2 = (totsum - d) / 2 ,Now s2 is the target sum
+ //edge cases (totsum - d) must be even and >= 0 else return 0
+
+//Memo Approach
+class Solution {
+    public int helper(int ind, int k, int[] arr, int[][] dp){
+        if (ind < 0) { //take care of this case when there is 0 in arr;
+            return (k == 0) ? 1 : 0;
+        }
+        if(dp[ind][k] != -1) return dp[ind][k];
+        
+        int nottake = helper(ind - 1, k, arr, dp);
+        int take = 0;
+        if(k - arr[ind] >= 0){
+            take = helper(ind - 1, k - arr[ind], arr, dp);
+        }
+        dp[ind][k] = take + nottake;
+        return dp[ind][k];
+    }
+    
+    public int countPartitions(int[] arr, int diff) {
+        int tot = 0;
+        int n = arr.length;
+        for(int v : arr){
+            tot += v;
+        }
+        int tar = (tot - diff) / 2;
+        
+        if (tot - diff < 0) return 0;
+        if ((tot - diff) % 2 != 0) return 0;  
+        
+        int[][] dp = new int[n][tar+1];
+        for(int i = 0; i < n; i++){
+            Arrays.fill(dp[i], -1);
+        }
+        
+        return helper(n-1, tar, arr, dp);
+    }
+}
+
+//Tabulation App
+    public int countPartitions(int[] arr, int diff) {
+        int tot = 0;
+        int n = arr.length;
+        for(int v : arr){
+            tot += v;
+        }
+        if (tot - diff < 0) return 0;
+        if ((tot - diff) % 2 != 0) return 0;  
+        
+        int tar = (tot - diff) / 2;
+        
+        int[][] dp = new int[n][tar+1];
+        dp[0][0] = 1;
+        if(arr[0] == 0) dp[0][0] = 2; //for edge case [0,10,0] t = 0
+        if(arr[0] != 0 && arr[0] <= tar){
+            dp[0][arr[0]] = 1;
+        }
+    
+        for(int i = 1; i < n; i++){
+            for(int t = 0; t <= tar; t++){
+                int nottake = dp[i-1][t];
+                int take = 0;
+                if(t - arr[i] >= 0){
+                    take = dp[i - 1][t - arr[i]];
+                }
+                dp[i][t] = take + nottake;
+            }
+        }
+        return dp[n-1][tar];
+    }
+
+//Space Optimisation App
+    public int countPartitions(int[] arr, int diff) {
+        int tot = 0;
+        int n = arr.length;
+        for(int v : arr){
+            tot += v;
+        }
+        if (tot - diff < 0) return 0;
+        if ((tot - diff) % 2 != 0) return 0;  
+        
+        int tar = (tot - diff) / 2;
+        
+        int[] prev = new int[tar+1];
+
+        prev[0] = 1;
+        if(arr[0] == 0) prev[0] = 2; //for edge case [0,10,0] t = 0
+        if(arr[0] != 0 && arr[0] <= tar){
+            prev[arr[0]] = 1;
+        }
+    
+        for(int i = 1; i < n; i++){
+            int[] curr = new int[tar+1];
+            curr[0] = 1;
+            for(int t = 0; t <= tar; t++){
+                int nottake = prev[t];
+                int take = 0;
+                if(t - arr[i] >= 0){
+                    take = prev[t - arr[i]];
+                }
+                curr[t] = take + nottake;
+            }
+            prev = curr;
+        }
+        return prev[tar];
+    }

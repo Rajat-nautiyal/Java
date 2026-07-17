@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K‑Partition Backtracking Visualization</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            padding: 30px 35px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        h1 {
+            font-size: 24px;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .subtitle {
+            color: #475569;
+            font-size: 15px;
+            margin-bottom: 25px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 14px;
+            background: #f8fafc;
+            border-radius: 4px;
+            padding: 10px 16px;
+        }
+        .array-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0 25px 0;
+            justify-content: center;
+        }
+        .num-box {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            border-radius: 12px;
+            background: #e2e8f0;
+            color: #1e293b;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .num-box.used {
+            background: #cbd5e1;
+            color: #94a3b8;
+            border-color: #94a3b8;
+            opacity: 0.6;
+        }
+        .num-box.in-current {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.3);
+        }
+        .num-box.trying {
+            background: #fef9c3;
+            border-color: #eab308;
+            animation: pulse 0.8s infinite alternate;
+        }
+        .num-box.bucket-done {
+            background: #bbf7d0;
+            border-color: #22c55e;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+        .bucket-display {
+            background: #f1f5f9;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 15px 0 20px 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+        }
+        .bucket-label {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 15px;
+        }
+        .bucket-items {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .bucket-items .num-box {
+            width: 44px;
+            height: 44px;
+            font-size: 16px;
+            background: #dbeafe;
+            border-color: #3b82f6;
+            border-radius: 8px;
+        }
+        .info-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 25px;
+            background: #f8fafc;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin: 15px 0 20px 0;
+            font-size: 15px;
+        }
+        .info-panel span {
+            color: #334155;
+        }
+        .info-panel .label {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .log-box {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            min-height: 60px;
+            margin: 12px 0 20px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .controls button {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .controls button:hover:not(:disabled) {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .controls button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .controls button.primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .controls button.primary:hover:not(:disabled) {
+            background: #2563eb;
+        }
+        .step-counter {
+            font-weight: 600;
+            color: #475569;
+            margin-left: 10px;
+            font-size: 15px;
+        }
+        .success-msg {
+            background: #dcfce7;
+            border: 2px solid #22c55e;
+            padding: 10px 18px;
+            border-radius: 12px;
+            color: #166534;
+            font-weight: 600;
+            margin-top: 10px;
+            display: none;
+        }
+        .success-msg.show {
+            display: block;
+        }
+        @media (max-width: 600px) {
+            .info-panel {
+                grid-template-columns: 1fr;
+            }
+            .num-box {
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧩 Partition to K Equal Sum Subsets</h1>
+    <div class="subtitle">
+        <strong>Backtracking Visualization</strong> – Try to fill <strong>K = 4</strong> buckets, each summing to <strong>target = 5</strong>.<br>
+        Array: <strong>[4, 3, 2, 3, 5, 2, 1]</strong> &nbsp;|&nbsp; Total = 20 → Each bucket = 5
+    </div>
+
+    <!-- Array Display -->
+    <div class="array-container" id="arrayContainer"></div>
+
+    <!-- Current Bucket Display -->
+    <div class="bucket-display">
+        <span class="bucket-label">🧺 Current Bucket:</span>
+        <div class="bucket-items" id="bucketItems"></div>
+        <span style="margin-left: auto; font-weight: 500;" id="bucketSum">Sum: 0 / 5</span>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <div><span class="label">K remaining:</span> <span id="kRemaining">4</span></div>
+        <div><span class="label">Elements used:</span> <span id="usedCount">0</span> / 7</div>
+        <div><span class="label">Step:</span> <span id="stepNum">0</span></div>
+        <div><span class="label">Status:</span> <span id="statusText">Ready</span></div>
+    </div>
+
+    <!-- Log -->
+    <div class="log-box" id="logBox">Click "Next Step" to start the animation.</div>
+
+    <!-- Success message -->
+    <div class="success-msg" id="successMsg">✅ All buckets formed successfully! Partition found.</div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button id="resetBtn" title="Reset to beginning">⟲ Reset</button>
+        <button id="prevBtn" disabled>◀ Previous</button>
+        <button id="nextBtn" class="primary">Next Step ▶</button>
+        <button id="autoBtn">▶ Auto Play</button>
+        <span class="step-counter" id="stepCounter">0 / 0</span>
+    </div>
+</div>
+
+<script>
+    // ------------------------------------------------
+    // 1. Define problem instance
+    // ------------------------------------------------
+    const nums = [4, 3, 2, 3, 5, 2, 1];
+    const K = 4;
+    const target = 5;
+
+    // ------------------------------------------------
+    // 2. Run backtracking and record steps
+    // ------------------------------------------------
+    const steps = [];
+    let used = new Array(nums.length).fill(false);
+    let currentBucket = [];
+    let currentSum = 0;
+    let kRemaining = K;
+    let startIdx = 0;
+    let success = false;
+
+    // Helper to push a step
+    function record(desc, highlightIdx = -1, bucketComplete = false, final = false) {
+        steps.push({
+            description: desc,
+            used: [...used],
+            currentBucket: [...currentBucket],
+            currentSum: currentSum,
+            kRemaining: kRemaining,
+            startIdx: startIdx,
+            highlightIdx: highlightIdx,
+            bucketComplete: bucketComplete,
+            final: final
+        });
+    }
+
+    // The actual backtracking function (records each call)
+    function backtrack(k, start, sum) {
+        // Record entry
+        record(`Trying to fill bucket #${K - k + 1} (k=${k})`, -1);
+        if (k === 0) {
+            success = true;
+            record("✅ All buckets filled! Success!", -1, false, true);
+            return true;
+        }
+        if (sum === target) {
+            record(`🎯 Bucket complete! Sum = ${target}`, -1, true);
+            // Move to next bucket
+            kRemaining = k - 1;
+            startIdx = 0;
+            currentSum = 0;
+            currentBucket = [];
+            record(`Starting next bucket (k=${kRemaining})`, -1);
+            return backtrack(k - 1, 0, 0);
+        }
+
+        for (let i = start; i < nums.length; i++) {
+            if (used[i]) continue;
+            if (sum + nums[i] > target) continue;
+            // Skip duplicates (if same value as previous and previous not used)
+            if (i > 0 && nums[i] === nums[i - 1] && !used[i - 1]) continue;
+
+            // Try including nums[i]
+            used[i] = true;
+            currentBucket.push(i);
+            currentSum = sum + nums[i];
+            record(`➕ Add nums[${i}] = ${nums[i]}  (sum = ${currentSum})`, i);
+
+            // Recursive call
+            let found = backtrack(k, i + 1, currentSum);
+            if (found) return true;
+
+            // Backtrack: remove nums[i]
+            used[i] = false;
+            currentBucket.pop();
+            currentSum = sum;
+            record(`↩️ Backtrack from nums[${i}] = ${nums[i]}`, i);
+            // Prune: if sum == 0 and we failed, no need to try other first elements
+            if (sum === 0) {
+                record(`⚡ Prune: first element for this bucket failed, stop trying others.`, -1);
+                break;
+            }
+        }
+        // If loop ends without success
+        record(`❌ No more options for current bucket, backtracking...`, -1);
+        return false;
+    }
+
+    // Reset state
+    function resetState() {
+        used = new Array(nums.length).fill(false);
+        currentBucket = [];
+        currentSum = 0;
+        kRemaining = K;
+        startIdx = 0;
+        success = false;
+        steps.length = 0;
+        // Record initial state
+        record("🔄 Start: no elements used, K buckets remaining.", -1);
+        // Run backtracking to generate all steps
+        backtrack(K, 0, 0);
+        // If not success, record failure
+        if (!success) {
+            record("❌ No valid partition exists.", -1, false, true);
+        }
+        // Reset current state to first step
+        currentStep = 0;
+    }
+
+    // ------------------------------------------------
+    // 3. UI rendering
+    // ------------------------------------------------
+    const arrayContainer = document.getElementById('arrayContainer');
+    const bucketItems = document.getElementById('bucketItems');
+    const bucketSum = document.getElementById('bucketSum');
+    const kRemainingEl = document.getElementById('kRemaining');
+    const usedCountEl = document.getElementById('usedCount');
+    const stepNumEl = document.getElementById('stepNum');
+    const statusText = document.getElementById('statusText');
+    const logBox = document.getElementById('logBox');
+    const stepCounter = document.getElementById('stepCounter');
+    const successMsg = document.getElementById('successMsg');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const autoBtn = document.getElementById('autoBtn');
+
+    let currentStep = 0;
+    let autoInterval = null;
+
+    function renderStep(stepIndex) {
+        const step = steps[stepIndex];
+        if (!step) return;
+
+        // Update array display
+        const boxes = arrayContainer.querySelectorAll('.num-box');
+        boxes.forEach((box, idx) => {
+            box.className = 'num-box';
+            if (step.used[idx]) {
+                box.classList.add('used');
+            }
+            if (step.currentBucket.includes(idx)) {
+                box.classList.add('in-current');
+            }
+            if (step.highlightIdx === idx) {
+                box.classList.add('trying');
+            }
+            if (step.bucketComplete && step.currentBucket.includes(idx)) {
+                box.classList.add('bucket-done');
+            }
+        });
+
+        // Update current bucket items
+        bucketItems.innerHTML = '';
+        let sum = 0;
+        step.currentBucket.forEach(idx => {
+            sum += nums[idx];
+            const el = document.createElement('div');
+            el.className = 'num-box';
+            el.textContent = nums[idx];
+            el.style.width = '44px';
+            el.style.height = '44px';
+            el.style.fontSize = '16px';
+            el.style.background = '#dbeafe';
+            el.style.borderColor = '#3b82f6';
+            bucketItems.appendChild(el);
+        });
+        bucketSum.textContent = `Sum: ${sum} / ${target}`;
+
+        // Info panel
+        kRemainingEl.textContent = step.kRemaining;
+        const usedCount = step.used.filter(v => v).length;
+        usedCountEl.textContent = `${usedCount} / ${nums.length}`;
+        stepNumEl.textContent = stepIndex;
+        statusText.textContent = step.final ? (success ? '✅ Success!' : '❌ Failed') : 'In progress...';
+
+        // Log
+        logBox.textContent = step.description;
+
+        // Step counter
+        stepCounter.textContent = `${stepIndex} / ${steps.length - 1}`;
+
+        // Success message
+        if (step.final && success) {
+            successMsg.classList.add('show');
+        } else {
+            successMsg.classList.remove('show');
+        }
+
+        // Enable/disable buttons
+        prevBtn.disabled = (stepIndex === 0);
+        nextBtn.disabled = (stepIndex >= steps.length - 1);
+    }
+
+    function goToStep(index) {
+        if (index < 0) index = 0;
+        if (index >= steps.length) index = steps.length - 1;
+        currentStep = index;
+        renderStep(currentStep);
+    }
+
+    function nextStep() {
+        if (currentStep < steps.length - 1) {
+            goToStep(currentStep + 1);
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 0) {
+            goToStep(currentStep - 1);
+        }
+    }
+
+    function resetAnimation() {
+        if (autoInterval) {
+            clearInterval(autoInterval);
+            autoInterval = null;
+            autoBtn.textContent = '▶ Auto Play';
+        }
+        goToStep(0);
+    }
+
+    function toggleAutoPlay() {
+        if (autoInterval) {
+            clearInterval(autoInterval);
+            autoInterval = null;
+            autoBtn.textContent = '▶ Auto Play';
+        } else {
+            autoBtn.textContent = '⏹ Stop';
+            autoInterval = setInterval(() => {
+                if (currentStep < steps.length - 1) {
+                    nextStep();
+                } else {
+                    clearInterval(autoInterval);
+                    autoInterval = null;
+                    autoBtn.textContent = '▶ Auto Play';
+                }
+            }, 800);
+        }
+    }
+
+    // ------------------------------------------------
+    // 4. Initialize
+    // ------------------------------------------------
+    function init() {
+        // Build array boxes
+        arrayContainer.innerHTML = '';
+        nums.forEach((val, idx) => {
+            const box = document.createElement('div');
+            box.className = 'num-box';
+            box.textContent = val;
+            box.dataset.index = idx;
+            arrayContainer.appendChild(box);
+        });
+
+        // Generate steps
+        resetState();
+
+        // Set up event listeners
+        nextBtn.addEventListener('click', nextStep);
+        prevBtn.addEventListener('click', prevStep);
+        resetBtn.addEventListener('click', resetAnimation);
+        autoBtn.addEventListener('click', toggleAutoPlay);
+
+        // Render first step
+        goToStep(0);
+    }
+
+    init();
+</script>
+</body>
+</html>
