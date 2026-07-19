@@ -103,6 +103,12 @@
 
   .arrow-next{stroke:var(--ink);stroke-width:2.2px;fill:none;}
   .arrow-random-orig{stroke:var(--blue-milk);stroke-width:1.6px;fill:none;stroke-dasharray:5 4;opacity:0.75;}
+  .arrow-random-orig.glow{
+    stroke-width:3.2px; opacity:1;
+    filter: drop-shadow(0 0 5px var(--blue-milk)) drop-shadow(0 0 2px var(--blue-milk));
+    animation: arcGlowPulse 0.9s ease-in-out infinite;
+  }
+  @keyframes arcGlowPulse{ 0%,100%{opacity:0.7;} 50%{opacity:1;} }
   .arrow-random-clone{stroke:var(--gold-coin);stroke-width:1.8px;fill:none;stroke-dasharray:5 4;}
 
   .ptr-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;}
@@ -484,11 +490,12 @@ function buildStaticSVG(built){
   });
 }
 
-function renderEdges(built, snap){
+function renderEdges(built, snap, step){
   const svg = document.getElementById('diagramSvg');
   const layer = svg.querySelector('#edgeLayer');
   layer.innerHTML='';
   const { state, curT, curAns } = snap;
+  const glowSourceId = (step.type==='set-random' || step.type==='no-random') ? curT : null;
 
   function addPath(d, cls, marker){
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
@@ -522,7 +529,8 @@ function renderEdges(built, snap){
       const bulge = 46 + Math.abs(b.x-a.x)*0.12;
       const midx = (a.x+b.x)/2;
       const startY = a.y - NODE_H/2, endY = b.y - NODE_H/2;
-      addPath(`M ${a.x} ${startY} Q ${midx} ${startY-bulge} ${b.x} ${endY}`, 'arrow-random-orig', 'arrowRandOrig');
+      addPath(`M ${a.x} ${startY} Q ${midx} ${startY-bulge} ${b.x} ${endY}`,
+        'arrow-random-orig' + (id===glowSourceId ? ' glow' : ''), 'arrowRandOrig');
     } else if(node.kind==='clone'){
       const target = state[node.random];
       if(!target) return;
@@ -584,7 +592,7 @@ function render(){
 
   const snap = computeStateAt(built, stepIndex);
   const pill = document.getElementById('phasePill');
-  const phaseLabels = {0:['Setup',''], 1:['Phase 1 · Interleave','p1'], 2:['Phase 2 · Random pointers','p2'], 3:['Phase 3 · Unweave','p3']};
+  const phaseLabels = {0:['Setup',''], 1:['Phase 1 · Connect all new (copied) nodes blw original nodes','p1'], 2:['Phase 2 · Connect Random pointers of Copied Nodes','p2'], 3:['Phase 3 · Separate Both Lists','p3']};
   const [label, cls] = phaseLabels[snap.phase];
   pill.textContent = label;
   pill.className = 'phase-pill ' + cls;
@@ -597,7 +605,7 @@ function render(){
     if(exists && !wasRevealed){ g.classList.add('pop'); setTimeout(()=>g.classList.remove('pop'), 420); }
   });
 
-  renderEdges(built, snap);
+  renderEdges(built, snap, step);
 
   document.getElementById('progressText').textContent = `Step ${stepIndex} / ${built.steps.length-1}`;
   document.getElementById('stepBackBtn').disabled = stepIndex===0;

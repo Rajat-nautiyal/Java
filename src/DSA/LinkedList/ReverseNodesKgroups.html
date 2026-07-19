@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reverse k-Group – Animated Walkthrough</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0b1220;
+            color: #e2e8f0;
+            padding: 0 16px 40px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #0b1220;
+            padding: 14px 0 12px;
+            border-bottom: 1px solid #1e2a44;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+            margin: 0 -16px;
+            padding-left: 16px;
+            padding-right: 16px;
+            contain: layout style;
+        }
+        .sticky-header .top-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .sticky-header .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #38bdf8;
+            white-space: nowrap;
+        }
+        .sticky-header .title small {
+            font-weight: 400;
+            color: #94a3b8;
+            font-size: 14px;
+            margin-left: 6px;
+        }
+        .sticky-header .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        .sticky-header button {
+            background: #1e2a44;
+            border: none;
+            color: #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            border: 1px solid #2a3a5a;
+            user-select: none;
+        }
+        .sticky-header button:hover:not(:disabled) {
+            background: #2e4062;
+        }
+        .sticky-header button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        .sticky-header button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .sticky-header button.primary {
+            background: #38bdf8;
+            color: #04202f;
+            border-color: #38bdf8;
+            font-weight: 600;
+        }
+        .sticky-header button.primary:hover:not(:disabled) {
+            background: #5cc9ff;
+        }
+        .sticky-header button.primary.active {
+            background: #f87171;
+            border-color: #f87171;
+            color: #1f0a0a;
+        }
+        .sticky-header .step-info {
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 4px 12px;
+            background: #111c30;
+            border-radius: 30px;
+            border: 1px solid #1e2a44;
+            white-space: nowrap;
+        }
+        .sticky-header .slider-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 120px;
+            flex: 0 1 180px;
+        }
+        .sticky-header .slider-wrap input[type="range"] {
+            flex: 1;
+            accent-color: #38bdf8;
+            height: 4px;
+        }
+        .sticky-header .speed-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 18px;
+            max-width: 1400px;
+            margin: 16px auto 0;
+            align-items: start;
+            contain: layout style;
+        }
+        @media (max-width: 980px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #111c30;
+            border: 1px solid #1e2a44;
+            border-radius: 12px;
+            padding: 16px 18px;
+            contain: layout style paint;
+            overflow: hidden;
+        }
+
+        .stage-wrap {
+            overflow: hidden;
+            border-radius: 10px;
+            background: #070d18;
+            border: 1px solid #1a2640;
+            padding: 4px;
+            position: relative;
+            height: 420px;
+            contain: layout style paint size;
+        }
+        .stage-wrap svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            contain: layout style;
+        }
+
+        /* Description now sits above the animation, below controls */
+        .desc-box {
+            margin-bottom: 14px;
+            padding: 12px 16px;
+            background: #070d18;
+            border: 1px solid #1a2640;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            height: 52px;
+            overflow: hidden;
+            border-left: 4px solid #38bdf8;
+            color: #cbd5e1;
+            contain: layout style;
+        }
+
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #94a3b8;
+            min-height: 20px;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 14px;
+            margin-top: 12px;
+            font-size: 12px;
+            min-height: 20px;
+        }
+
+        .code-panel-wrap {
+            height: 580px;
+            overflow: hidden;
+            contain: layout style paint;
+        }
+        pre.code {
+            margin: 0;
+            font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            overflow: auto;
+            height: 100%;
+            background: #070d18;
+            border-radius: 8px;
+            padding: 8px 0;
+            color: #bcc8dd;
+            scroll-behavior: auto;
+            scrollbar-gutter: stable;
+            contain: strict;
+        }
+        pre.code .line {
+            padding: 0 14px;
+            white-space: pre;
+            border-left: 3px solid transparent;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            line-height: 1.7;
+            min-height: 20.4px;
+        }
+        pre.code .line .ln {
+            display: inline-block;
+            width: 28px;
+            color: #4b5a72;
+            user-select: none;
+            text-align: right;
+            margin-right: 10px;
+        }
+        pre.code .line.active {
+            background: #1a3050;
+            border-left-color: #38bdf8;
+            color: #fff;
+        }
+
+        /* Node & tag styles */
+        .box-node rect { fill: #16223a; stroke: #3a4a68; stroke-width: 2; rx: 8; }
+        .box-node.null-node rect { fill: #111c2a; stroke: #3a4a68; stroke-dasharray: 5 4; }
+        .box-node text { fill: #e8edf6; font-family: 'Cascadia Code', Consolas, monospace; font-size: 18px; font-weight: 700; text-anchor: middle; }
+        .group-highlight { fill: #f59e0b; opacity: 0; transition: opacity 0.35s ease; rx: 10; }
+        .group-highlight.on { opacity: 0.15; }
+        path.arrow { fill: none; stroke: #5a708e; stroke-width: 2.6; transition: stroke 0.2s; }
+        path.arrow.flash { stroke: #fb923c; stroke-width: 3.8; }
+
+        /* More spherical tag rectangles */
+        .tag rect {
+            rx: 12;
+            ry: 12;
+            stroke-width: 1.8;
+        }
+        .tag {
+            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+            opacity: 0;
+            will-change: transform, opacity;
+            pointer-events: none;
+        }
+        .tag.visible {
+            opacity: 1;
+        }
+        .tag text {
+            font-family: 'Cascadia Code', Consolas, monospace;
+            font-size: 11px;
+            font-weight: 700;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .footer {
+            max-width: 1400px;
+            margin: 18px auto 0;
+            color: #4b5a72;
+            font-size: 12px;
+            text-align: center;
+            border-top: 1px solid #16203a;
+            padding-top: 16px;
+        }
+
+        @media (max-width: 700px) {
+            .stage-wrap { height: 340px; }
+            .code-panel-wrap { height: 320px; }
+            .desc-box { height: 48px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="sticky-header">
+    <div class="top-row">
+        <div class="title">🔄 Reverse <span style="color:#fcd34d;">k</span>-Group <small>animated walkthrough</small></div>
+        <div class="btn-group">
+            <button id="resetBtn">⏮</button>
+            <button id="prevBtn">◀</button>
+            <button id="playBtn" class="primary">▶ Play</button>
+            <button id="nextBtn">▶</button>
+            <button id="endBtn">⏭</button>
+        </div>
+        <div class="slider-wrap">
+            <span class="step-info" id="stepLabel">Step <strong id="curStepNum">0</strong> / <span id="totalSteps">0</span></span>
+            <input type="range" id="scrubber" min="0" max="0" value="0" step="1" />
+        </div>
+        <div class="speed-group">
+            <span>🐢</span>
+            <input type="range" id="speedControl" min="300" max="2000" value="800" step="50" />
+            <span>🐇</span>
+        </div>
+    </div>
+</header>
+
+<div class="main-grid">
+    <div class="panel">
+        <!-- Controls -->
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+            <label style="font-size:12px; color:#94a3b8;">List <input type="text" id="valuesInput" value="1,2,3,4,5" style="background:#070d18; border:1px solid #1a2640; color:#e2e8f0; padding:5px 10px; border-radius:6px; width:160px;"></label>
+            <label style="font-size:12px; color:#94a3b8;">k <input type="number" id="kInput" value="3" min="1" max="10" style="background:#070d18; border:1px solid #1a2640; color:#e2e8f0; padding:5px 8px; border-radius:6px; width:56px;"></label>
+            <button id="buildBtn" style="background:#38bdf8; border:none; color:#04202f; padding:6px 18px; border-radius:8px; font-weight:600; cursor:pointer;">⟳ Build</button>
+        </div>
+
+        <!-- Step description placed BELOW Build and ABOVE the animation -->
+        <div class="desc-box" id="descBox">Click <strong>Build</strong> to start.</div>
+
+        <!-- SVG Animation -->
+        <div class="stage-wrap"><svg id="stage"></svg></div>
+
+        <div class="info-row">
+            <span><b id="infoLen">-</b> length</span>
+            <span><b id="infoGroups">-</b> groups</span>
+            <span><b id="infoK">-</b> k</span>
+            <span><b id="infoKLocal">-</b> k (reverse)</span>
+        </div>
+        <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel code-panel-wrap">
+        <pre class="code" id="codePane"></pre>
+    </div>
+</div>
+
+<div class="footer">
+    Node boxes stay fixed — only pointer arrows move. Tags show where each variable points.
+    <span style="color:#4b5a72;">&nbsp;·&nbsp;</span> <kbd style="background:#1a2640; padding:1px 8px; border-radius:4px; color:#94a3b8;">Space</kbd> play/pause &nbsp; <kbd>←</kbd> <kbd>→</kbd> step
+</div>
+
+<script>
+    (function() {
+        const CODE_LINES = [
+            "class Solution {",
+            "    public ArrayList<ListNode> reverse(ListNode start, int k) {",
+            "        ListNode curr = start;",
+            "        ListNode prev = null;",
+            "        while (k > 0) {",
+            "            ListNode nextNode = curr.next;",
+            "            curr.next = prev;",
+            "            prev = curr;",
+            "            curr = nextNode;",
+            "            k--;",
+            "        }",
+            "        return new ArrayList<>(Arrays.asList(prev, curr));",
+            "    }",
+            "    public ListNode reverseKGroup(ListNode head, int k) {",
+            "        ListNode tail = head;",
+            "        int length = 0;",
+            "        while (tail != null) {",
+            "            length++;",
+            "            tail = tail.next;",
+            "        }",
+            "        int groups = length / k;",
+            "        tail = null;",
+            "        ListNode groupStart = head;",
+            "        ListNode resultHead = head;",
+            "        while (groups > 0) {",
+            "            ListNode[] reversed = reverse(groupStart, k);",
+            "            ListNode reversedHead = reversed[0];",
+            "            ListNode afterGroup = reversed[1];",
+            "            if (tail == null) {",
+            "                tail = head;",
+            "                resultHead = reversedHead;",
+            "            } else {",
+            "                tail.next = reversedHead;",
+            "                tail = groupStart;",
+            "            }",
+            "            groupStart = afterGroup;",
+            "            groups--;",
+            "        }",
+            "        if (tail != null) tail.next = groupStart;",
+            "        return resultHead;",
+            "    }",
+            "}"
+        ];
+
+        let VALUES = [], steps = [], currentStep = -1, nodeCount = 0, groupSize = 3;
+        let animFrameIds = [], pathGeomCache = [], playTimer = null, isPlaying = false, needsRebuild = true;
+
+        const NS = 'http://www.w3.org/2000/svg';
+        const BOX_W = 62, BOX_H = 48, SPACING = 130, START_X = 60;
+        const TOP_PAD = 28, LANE_GAP = 32;
+        const LANE_ORDER = ['head','resultHead','groupStart','tail','curr','prev','nextNode','reversedHead','afterGroup'];
+        const LANE_COLOR = { head:'#16a34a', resultHead:'#dc2626', groupStart:'#9333ea', tail:'#ea580c', curr:'#2563eb', prev:'#0891b2', nextNode:'#64748b', reversedHead:'#db2777', afterGroup:'#ca8a04' };
+        const LANE_LABEL = { head:'head', resultHead:'resultHead', groupStart:'groupStart', tail:'tail', curr:'curr', prev:'prev', nextNode:'nextNode', reversedHead:'revHead', afterGroup:'afterGrp' };
+
+        function laneY(n) { return TOP_PAD + LANE_ORDER.indexOf(n)*LANE_GAP + 8; }
+        function centerX(i) { return START_X + i*SPACING + BOX_W/2; }
+        const BOX_TOP = TOP_PAD + LANE_ORDER.length*LANE_GAP + 26;
+        const BOX_BOTTOM = BOX_TOP + BOX_H;
+
+        function pathGeom(from, to) {
+            const x1=centerX(from), y1=BOX_BOTTOM, x2=centerX(to), y2=BOX_BOTTOM;
+            const depth = 32 + 16*Math.min(Math.abs(to-from),6);
+            return {x1,y1,cx:(x1+x2)/2,cy:BOX_BOTTOM+depth,x2,y2};
+        }
+        function dString(g) { return `M ${g.x1} ${g.y1} Q ${g.cx} ${g.cy} ${g.x2} ${g.y2}`; }
+
+        const svg = document.getElementById('stage');
+        const descBox = document.getElementById('descBox');
+        const codePane = document.getElementById('codePane');
+        let svgElements = {};
+
+        function makeSnapshot(line, desc, ptrs, nextMap) {
+            return { line, desc, ptrs:{...ptrs}, next:{...nextMap} };
+        }
+
+function simulate(values, kVal) {
+    VALUES = values; const n = values.length;
+    const nextMap = {}; for(let i=0;i<n;i++) nextMap[i]= i<n-1 ? i+1 : 'NULL';
+const ptrs = {
+    head: 0,
+    tail: undefined,
+    groupStart: undefined,
+    resultHead: undefined,
+    curr: undefined,
+    prev: undefined,
+    nextNode: undefined,
+    kLocal: undefined,
+    inReverse: false,
+    length: undefined,
+    groups: undefined,
+    reversedHead: undefined,
+    afterGroup: undefined
+};    const snaps = [];
+
+    // Phase 1: Compute length
+    snaps.push(makeSnapshot(13, `Computing list length to get no. of groups(len/k) to reverse`, ptrs, nextMap));
+    snaps.push(makeSnapshot(14, `Computing list length to get no. of groups(len/k) to reverse`, ptrs, nextMap));
+    ptrs.tail = ptrs.head;
+    ptrs.length = 0;
+    snaps.push(makeSnapshot(15, `Computing list length to get no. of groups(len/k) to reverse`, ptrs, nextMap));
+    while(ptrs.tail !== 'NULL') {
+        snaps.push(makeSnapshot(16, `Computing list length to get no. of groups(len/k) to reverse`, ptrs, nextMap));
+        ptrs.length++;
+        snaps.push(makeSnapshot(17, `Computing list length to get no. of groups(len/k) to reverse`, ptrs, nextMap));
+        ptrs.tail = nextMap[ptrs.tail];
+        snaps.push(makeSnapshot(18, `Computing list length to get no. of groups(len/k) to reverse`, ptrs, nextMap));
+    }
+    snaps.push(makeSnapshot(16, `Computing list length to get no. of groups(len/k) to reverse`, ptrs, nextMap));
+
+    // Phase 2: Calculate groups
+    ptrs.groups = Math.floor(ptrs.length/kVal);
+    snaps.push(makeSnapshot(20, `number of groups = ${ptrs.groups}`, ptrs, nextMap));
+
+    // Phase 3: Initialize pointers
+    ptrs.tail = 'NULL';
+    snaps.push(makeSnapshot(21, `Initializing group pointers…`, ptrs, nextMap));
+    ptrs.groupStart = ptrs.head;
+    snaps.push(makeSnapshot(22, `Initializing group pointers…`, ptrs, nextMap));
+    ptrs.resultHead = ptrs.head;
+    snaps.push(makeSnapshot(23, `Initializing group pointers…`, ptrs, nextMap));
+
+    let groupsLeft = ptrs.groups;
+    while(groupsLeft > 0) {
+        snaps.push(makeSnapshot(24, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+
+        // Reverse group (all sub‑steps share the same description)
+        ptrs.curr = ptrs.groupStart; ptrs.prev = 'NULL'; ptrs.kLocal = kVal;
+        ptrs.inReverse = true; 
+        snaps.push(makeSnapshot(2, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+        snaps.push(makeSnapshot(3, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+        while(ptrs.kLocal > 0) {
+            snaps.push(makeSnapshot(4, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+            const nn = nextMap[ptrs.curr]; ptrs.nextNode = nn;
+            snaps.push(makeSnapshot(5, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+            nextMap[ptrs.curr] = ptrs.prev;
+            snaps.push(makeSnapshot(6, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+            ptrs.prev = ptrs.curr;
+            snaps.push(makeSnapshot(7, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+            ptrs.curr = ptrs.nextNode;
+            snaps.push(makeSnapshot(8, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+            ptrs.kLocal--;
+            snaps.push(makeSnapshot(9, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+        }
+        snaps.push(makeSnapshot(4, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+        const rh = ptrs.prev, curr = ptrs.curr;
+        snaps.push(makeSnapshot(11, `Reverse a group then return prev & curr Nodes`, ptrs, nextMap));
+        ptrs.inReverse = false;
+
+        // Link reversed group
+        snaps.push(makeSnapshot(25, `Linking reversed group…`, ptrs, nextMap));
+        ptrs.reversedHead = rh;
+        snaps.push(makeSnapshot(26, `Linking reversed group…`, ptrs, nextMap));
+        ptrs.afterGroup = curr;
+        snaps.push(makeSnapshot(27, `Linking reversed group…`, ptrs, nextMap));
+
+        if(ptrs.tail === 'NULL') {
+            snaps.push(makeSnapshot(28, `Linking reversed group…`, ptrs, nextMap));
+            ptrs.tail = ptrs.head;
+            snaps.push(makeSnapshot(29, `Linking reversed group…`, ptrs, nextMap));
+            ptrs.resultHead = rh;
+            snaps.push(makeSnapshot(30, `Linking reversed group…`, ptrs, nextMap));
+        } else {
+            snaps.push(makeSnapshot(28, `Linking reversed group…`, ptrs, nextMap));
+            nextMap[ptrs.tail] = rh;
+            snaps.push(makeSnapshot(33, `Linking reversed group…`, ptrs, nextMap));
+            ptrs.tail = ptrs.groupStart;
+            snaps.push(makeSnapshot(34, `Linking reversed group…`, ptrs, nextMap));
+        }
+
+        // Advance to next group
+        ptrs.groupStart = ptrs.afterGroup;
+        snaps.push(makeSnapshot(36, `Advancing to next group…`, ptrs, nextMap));
+        groupsLeft--; ptrs.groups = groupsLeft;
+        snaps.push(makeSnapshot(37, `Advancing to next group…`, ptrs, nextMap));
+    }
+
+    snaps.push(makeSnapshot(24, `All groups reversed.`, ptrs, nextMap));
+    if(ptrs.tail !== 'NULL' && ptrs.tail !== undefined) {
+        nextMap[ptrs.tail] = ptrs.groupStart;
+        snaps.push(makeSnapshot(39, `Attaching remaining nodes…`, ptrs, nextMap));
+    } else {
+        snaps.push(makeSnapshot(39, `No remaining nodes.`, ptrs, nextMap));
+    }
+    snaps.push(makeSnapshot(40, `Done – returning new head.`, ptrs, nextMap));
+    return snaps;
+}
+    function buildScene() {
+            svg.innerHTML = '';
+            const defs = document.createElementNS(NS,'defs');
+            const marker = document.createElementNS(NS,'marker');
+            marker.setAttribute('id','arrowhead');
+            marker.setAttribute('markerWidth','10');
+            marker.setAttribute('markerHeight','10');
+            marker.setAttribute('refX','9');
+            marker.setAttribute('refY','5');
+            marker.setAttribute('orient','auto');
+            const mp = document.createElementNS(NS,'path');
+            mp.setAttribute('d','M0,0 L10,5 L0,10 Z');
+            mp.setAttribute('fill','#5a708e');
+            marker.appendChild(mp);
+            defs.appendChild(marker);
+            svg.appendChild(defs);
+
+            const maxN = Math.max(nodeCount,1);
+            const w = START_X*2 + (maxN+1)*SPACING, h = BOX_BOTTOM+38+16*Math.min(maxN,8)+28;
+            svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+            svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+
+            const groupRect = document.createElementNS(NS,'rect');
+            groupRect.setAttribute('class','group-highlight');
+            groupRect.setAttribute('y',BOX_TOP-10);
+            groupRect.setAttribute('height',BOX_H+20);
+            svg.appendChild(groupRect);
+
+            const paths = [];
+            for(let i=0;i<nodeCount;i++) {
+                const g = pathGeom(i, i<nodeCount-1?i+1:nodeCount);
+                pathGeomCache[i]=g;
+                const p = document.createElementNS(NS,'path');
+                p.setAttribute('class','arrow');
+                p.setAttribute('d',dString(g));
+                p.setAttribute('marker-end','url(#arrowhead)');  // <-- directional arrowhead added
+                svg.appendChild(p);
+                paths.push(p);
+            }
+
+            const boxes = [];
+            for(let i=0;i<nodeCount;i++) {
+                const g = document.createElementNS(NS,'g');
+                g.setAttribute('class','box-node');
+                const r = document.createElementNS(NS,'rect');
+                r.setAttribute('x',START_X+i*SPACING);
+                r.setAttribute('y',BOX_TOP);
+                r.setAttribute('width',BOX_W);
+                r.setAttribute('height',BOX_H);
+                g.appendChild(r);
+                const t = document.createElementNS(NS,'text');
+                t.setAttribute('x',centerX(i));
+                t.setAttribute('y',BOX_TOP+BOX_H/2+2);
+                t.textContent = VALUES[i];
+                g.appendChild(t);
+                boxes.push(g);
+                svg.appendChild(g);
+            }
+
+            const nullG = document.createElementNS(NS,'g');
+            nullG.setAttribute('class','box-node null-node');
+            const nr = document.createElementNS(NS,'rect');
+            nr.setAttribute('x',START_X+nodeCount*SPACING);
+            nr.setAttribute('y',BOX_TOP);
+            nr.setAttribute('width',BOX_W);
+            nr.setAttribute('height',BOX_H);
+            nullG.appendChild(nr);
+            const nt = document.createElementNS(NS,'text');
+            nt.setAttribute('x',centerX(nodeCount));
+            nt.setAttribute('y',BOX_TOP+BOX_H/2+2);
+            nt.textContent = 'NULL';
+            nullG.appendChild(nt);
+            svg.appendChild(nullG);
+
+            const tags = {};
+            LANE_ORDER.forEach(name => {
+                const g = document.createElementNS(NS,'g');
+                g.setAttribute('class','tag');
+                const r = document.createElementNS(NS,'rect');
+                r.setAttribute('x','-32');
+                r.setAttribute('y','-14');
+                r.setAttribute('width','64');
+                r.setAttribute('height','26');
+                r.setAttribute('fill','#0b1220');
+                r.setAttribute('stroke',LANE_COLOR[name]);
+                g.appendChild(r);
+                const t = document.createElementNS(NS,'text');
+                t.setAttribute('x','0');
+                t.setAttribute('y','0');
+                t.setAttribute('fill',LANE_COLOR[name]);
+                t.textContent = LANE_LABEL[name];
+                g.appendChild(t);
+                g.style.transform = `translate(${centerX(0)}px, ${laneY(name)}px)`;
+                svg.appendChild(g);
+                tags[name]=g;
+            });
+
+            svgElements = { paths, boxes, nullG, groupRect, tags };
+            animFrameIds = new Array(nodeCount).fill(null);
+            needsRebuild = false;
+        }
+
+        function setPathTarget(i, tgtIdx, animate) {
+            const path = svgElements.paths[i];
+            if(!path) return;
+            const from = pathGeomCache[i];
+            if(!from) return;
+            const to = pathGeom(i, tgtIdx);
+            if(animFrameIds[i]) { cancelAnimationFrame(animFrameIds[i]); animFrameIds[i]=null; }
+            if(!animate) { pathGeomCache[i]=to; path.setAttribute('d',dString(to)); return; }
+            const dur=500, start=performance.now();
+            function frame(now) {
+                const t = Math.min(1,(now-start)/dur), e = t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+                const cur = { x1:from.x1+(to.x1-from.x1)*e, y1:from.y1+(to.y1-from.y1)*e,
+                    cx:from.cx+(to.cx-from.cx)*e, cy:from.cy+(to.cy-from.cy)*e,
+                    x2:from.x2+(to.x2-from.x2)*e, y2:from.y2+(to.y2-from.y2)*e };
+                path.setAttribute('d',dString(cur));
+                if(t<1) animFrameIds[i]=requestAnimationFrame(frame);
+                else { pathGeomCache[i]=to; animFrameIds[i]=null; }
+            }
+            animFrameIds[i]=requestAnimationFrame(frame);
+        }
+
+        function renderStep(idx, animate) {
+            if(idx<0||idx>=steps.length) return;
+            if(needsRebuild) buildScene();
+            currentStep = idx;
+            const snap = steps[idx];
+
+            // Code highlight only – no scrolling
+            document.querySelectorAll('#codePane .line.active').forEach(el=>el.classList.remove('active'));
+            const lineEl = document.getElementById('code-line-'+snap.line);
+            if(lineEl) lineEl.classList.add('active');
+
+            descBox.innerHTML = snap.desc;
+            document.getElementById('infoLen').textContent = snap.ptrs.length??'-';
+            document.getElementById('infoGroups').textContent = snap.ptrs.groups??'-';
+            document.getElementById('infoK').textContent = groupSize;
+            document.getElementById('infoKLocal').textContent = snap.ptrs.kLocal??'-';
+
+            for(let i=0;i<nodeCount;i++) {
+                const tgt = snap.next[i], tgtIdx = tgt==='NULL'?nodeCount:tgt;
+                setPathTarget(i, tgtIdx, animate);
+            }
+
+            LANE_ORDER.forEach(name => {
+                const val = snap.ptrs[name];
+                const g = svgElements.tags[name];
+                if(!g) return;
+                // NULL pointers are completely hidden
+                if(val === undefined || val === null || val === 'NULL') {
+                    g.classList.remove('visible');
+                } else {
+                    g.classList.add('visible');
+                    const x = centerX(val);
+                    const y = laneY(name);
+                    if(!animate) g.style.transition='none';
+                    g.style.transform = `translate(${x}px, ${y}px)`;
+                    if(!animate) { g.offsetHeight; g.style.transition=''; }
+                }
+            });
+
+            const rect = svgElements.groupRect;
+            if(rect) {
+                if(snap.ptrs.inReverse && snap.ptrs.groupStartIdx != null) {
+                    const startIdx = snap.ptrs.groupStart;
+                    const size = groupSize;   // global k value
+                    const pad=14, left=START_X + startIdx*SPACING - pad;
+                    const right=START_X + (startIdx + size - 1)*SPACING + BOX_W + pad;
+                    rect.setAttribute('x',left);
+                    rect.setAttribute('width',right-left);
+                    rect.classList.add('on');
+                } else {
+                    rect.classList.remove('on');
+                }
+            }
+
+            scrubber.max = steps.length-1;
+            scrubber.value = idx;
+            curStepNum.textContent = idx+1;
+            totalStepsEl.textContent = steps.length;
+            document.getElementById('prevBtn').disabled = idx<=0;
+            document.getElementById('nextBtn').disabled = idx>=steps.length-1;
+        }
+
+        function buildCodePane() {
+            codePane.innerHTML = '';
+            CODE_LINES.forEach((text,i) => {
+                const div = document.createElement('div');
+                div.className='line';
+                div.id='code-line-'+(i+1);
+                div.innerHTML = `<span class="ln">${i+1}</span>${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}`;
+                codePane.appendChild(div);
+            });
+        }
+
+        function build() {
+            stopPlay();
+            const vals = document.getElementById('valuesInput').value.split(',').map(s=>s.trim()).filter(s=>s).map(Number);
+            groupSize = Math.max(1, parseInt(document.getElementById('kInput').value)||1);
+            if(vals.length<2 || vals.some(isNaN)) { descBox.innerHTML='⚠️ Please enter at least 2 numbers.'; return; }
+            nodeCount = Math.min(vals.length,10);
+            VALUES = vals.slice(0,nodeCount);
+            steps = simulate(VALUES, groupSize);
+            pathGeomCache=[];
+            needsRebuild=true;
+            buildScene();
+            renderStep(0,false);
+        }
+
+        function stopPlay() {
+            if(playTimer) clearInterval(playTimer);
+            playTimer=null;
+            isPlaying=false;
+            document.getElementById('playBtn').textContent='▶ Play';
+            document.getElementById('playBtn').classList.remove('active');
+        }
+
+        function togglePlay() {
+            if(isPlaying) { stopPlay(); return; }
+            if(currentStep>=steps.length-1) renderStep(0,false);
+            isPlaying=true;
+            document.getElementById('playBtn').textContent='⏸ Pause';
+            document.getElementById('playBtn').classList.add('active');
+            playTimer = setInterval(() => {
+                if(currentStep>=steps.length-1) { stopPlay(); return; }
+                renderStep(currentStep+1, true);
+            }, parseInt(document.getElementById('speedControl').value)||800);
+        }
+
+        function nextStep() { if(currentStep<steps.length-1) { stopPlay(); renderStep(currentStep+1, true); } }
+        function prevStep() { if(currentStep>0) { stopPlay(); renderStep(currentStep-1, true); } }
+        function reset() { stopPlay(); renderStep(0,false); }
+        function end() { stopPlay(); renderStep(steps.length-1,false); }
+
+        document.getElementById('buildBtn').addEventListener('click', build);
+        document.getElementById('prevBtn').addEventListener('click', prevStep);
+        document.getElementById('nextBtn').addEventListener('click', nextStep);
+        document.getElementById('resetBtn').addEventListener('click', reset);
+        document.getElementById('endBtn').addEventListener('click', end);
+        document.getElementById('playBtn').addEventListener('click', togglePlay);
+        document.getElementById('scrubber').addEventListener('input', e => { stopPlay(); renderStep(parseInt(e.target.value), false); });
+        document.getElementById('speedControl').addEventListener('change', ()=>{ if(isPlaying){ stopPlay(); togglePlay(); } });
+        document.addEventListener('keydown', e => {
+            if(e.key===' '||e.key==='Space') { e.preventDefault(); togglePlay(); }
+            else if(e.key==='ArrowRight') { e.preventDefault(); nextStep(); }
+            else if(e.key==='ArrowLeft') { e.preventDefault(); prevStep(); }
+            else if(e.key==='r'||e.key==='R') reset();
+        });
+        window.addEventListener('resize', () => {
+            clearTimeout(window.resized);
+            window.resized = setTimeout(() => {
+                if(steps.length && currentStep>=0) renderStep(currentStep, false);
+            }, 200);
+        });
+
+        buildCodePane();
+        build();
+    })();
+</script>
+</body>
+</html>
