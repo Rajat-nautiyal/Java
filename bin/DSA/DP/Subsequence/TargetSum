@@ -1,0 +1,100 @@
+494. Target Sum
+//Idea :- Same Concept as Q. Partitions with Given Difference s1 - s2 = d(target)
+    //s1 + s2 = tot and s1 - s2 = target
+    //s2 = totsum - target / 2
+    //handle edge cases:- totsum - target >= 0 and must be even
+    //find no. of ways to get s2(new Target)
+
+//Memo App
+class Solution {
+    public int helper(int ind, int k, int[] nums, int[][] dp){
+        if(ind < 0){
+            if(k == 0) return 1;
+            else return 0;
+        }
+        if(dp[ind][k] != -1) return dp[ind][k];
+
+        int nottake =  helper(ind-1, k, nums, dp);
+        int take = 0;
+        if(nums[ind] <= k){
+            take =  helper(ind - 1, k - nums[ind], nums, dp);
+        }
+        dp[ind][k] = take + nottake;
+        return take + nottake;
+    }
+    public int findTargetSumWays(int[] nums, int target) {
+        int n = nums.length;
+        int tot = 0;
+        for(int v : nums){
+            tot += v;
+        }
+        if((tot - target < 0) || (tot - target) % 2 != 0) return 0;
+        int tar = (tot - target) / 2;
+        int[][] dp = new int[n][tar+1];
+        for(int i = 0; i < n; i++){
+            Arrays.fill(dp[i], -1);
+        }
+        return helper(n-1, tar, nums, dp);
+    }
+}
+//Tabulation App
+    public int findTargetSumWays(int[] nums, int target) {
+        int n = nums.length;
+        int tot = 0;
+        for(int v : nums){
+            tot += v;
+        }
+        if((tot - target < 0) || (tot - target) % 2 != 0) return 0;
+        int tar = (tot - target) / 2;
+        int[][] dp = new int[n][tar+1];
+
+        dp[0][0] = 1;
+        if(nums[0] == 0) dp[0][0] = 2; //edge case
+        else if(nums[0] <= tar){
+            dp[0][nums[0]] = 1;
+        }
+        for(int i = 1; i < n; i++){
+            for(int t = 0; t <= tar; t++){
+                int nottake = dp[i-1][t];
+                int take = 0;
+                if(nums[i] <= t){
+                    take = dp[i-1][t - nums[i]];
+                }
+                dp[i][t] = take + nottake;
+            }
+        }
+        return dp[n-1][tar];
+    }
+
+//Space Opt
+class Solution {
+    public int findTargetSumWays(int[] nums, int target) {
+        int n = nums.length;
+        int tot = 0;
+        for(int v : nums){
+            tot += v;
+        }
+        if((tot - target < 0) || (tot - target) % 2 != 0) return 0;
+        int tar = (tot - target) / 2;
+        int[] prev = new int[tar+1];
+
+        prev[0] = 1;
+        if(nums[0] == 0) prev[0] = 2;
+        else if(nums[0] <= tar){
+            prev[nums[0]] = 1;
+        }
+        for(int i = 1; i < n; i++){
+            int[] curr = new int[tar+1];            
+            for(int t = 0; t <= tar; t++){
+                int nottake = prev[t];
+                int take = 0;
+                if(nums[i] <= t){
+                    take = prev[t - nums[i]];
+                }
+                curr[t] = take + nottake;
+            }
+            prev = curr;
+        }
+        return prev[tar];
+    }
+}

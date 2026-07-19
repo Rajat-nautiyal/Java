@@ -1,0 +1,78 @@
+322. Coin Change
+
+//Greedy wont work, just use this eg [1, 6, 7, 9, 11] t = 13 to understand
+//Memo Approach:- Animation exist in CoinChange.html
+class Solution {
+    public int helper(int ind, int rem, int[] arr, int[][] dp){
+        if(ind == 0){
+            if(rem % arr[0] == 0) return rem / arr[0];
+            else return (int)1e8;
+        }
+        if(dp[ind][rem] != 0) return dp[ind][rem];
+
+        int nottake = 0 + helper(ind - 1, rem, arr, dp);
+        int take = Integer.MAX_VALUE;
+        if(rem >= arr[ind]){
+            take = 1 + helper(ind, rem - arr[ind], arr, dp);
+        }
+        dp[ind][rem] = Math.min(nottake, take);
+        return dp[ind][rem];
+    }
+    public int coinChange(int[] coins, int amount) {
+        int n = coins.length;
+        int[][] dp = new int[n][amount+1];        
+        int min = helper(n-1, amount, coins, dp);
+        if(min >= (int)1e8) return -1;
+        return min;
+    }
+}
+
+//Tabulation Approach(copy paste of memo approach)
+    public int coinChange(int[] coins, int amount) {
+        int n = coins.length;
+        int[][] dp = new int[n][amount+1];
+
+        //base case
+        for(int rem = 0; rem <= amount; rem++){
+            dp[0][rem] = rem % coins[0] == 0? rem / coins[0] : (int)1e8;
+        }
+        for(int i = 1; i < n; i++){
+            for(int rem = 0; rem <= amount; rem++){
+                int nottake = dp[i - 1][rem];
+                int take = (int)1e8;
+                if(rem >= coins[i]){
+                    take = 1 + dp[i][rem - coins[i]];
+                }
+                dp[i][rem] = Math.min(nottake, take);                
+            }
+        }
+        if(dp[n-1][amount] >= (int)1e8) return -1;
+        return dp[n-1][amount];
+    }
+
+//Space Opt
+class Solution {
+    public int coinChange(int[] coins, int amount) {
+        int n = coins.length;
+        int[] prev = new int[amount+1];
+        int[] curr = new int[amount+1];
+
+        //base case
+        for(int rem = 0; rem <= amount; rem++){
+            prev[rem] = rem % coins[0] == 0? rem / coins[0] : (int)1e8;
+        }
+        for(int i = 1; i < n; i++){
+            for(int rem = 0; rem <= amount; rem++){
+                int nottake = prev[rem];
+                int take = (int)1e8;
+                if(rem >= coins[i]){
+                    take = 1 + curr[rem - coins[i]];
+                }
+                curr[rem] = Math.min(nottake, take);                
+            }
+            prev = curr;
+        }
+        if(prev[amount] >= (int)1e8) return -1;
+        return prev[amount];
+    }
+}

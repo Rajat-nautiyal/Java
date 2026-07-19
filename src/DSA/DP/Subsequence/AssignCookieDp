@@ -1,0 +1,74 @@
+455. Assign Cookies
+//Animation for tabulation exist in AssignCookie.html
+//Memo
+class Solution {
+    public int helper(int gi, int si, int[] g, int[] s, int[][] dp){
+        if(gi >= g.length || si >= s.length){
+            return 0;
+        }
+        int res = 0;
+        if(dp[gi][si] != -1) return dp[gi][si];
+        //case1 :- greed is satisfied,so move both ind
+        if(s[si] >= g[gi]){
+            res = helper(gi+1, si+1, g, s, dp)+1;
+        }
+        //case2 :-  greed is not satisfied
+        res = Math.max(res, helper(gi, si+1, g, s, dp));
+        dp[gi][si] = res;
+        return res;
+    }
+    public int findContentChildren(int[] g, int[] s) {
+        int[][] dp = new int[g.length+1][s.length+1];
+        Arrays.sort(g);
+        Arrays.sort(s);
+        for(int i = 0; i < g.length; i++){
+            Arrays.fill(dp[i], -1);
+        }
+        return helper(0, 0, g, s, dp);
+    }
+}
+//Tabulation APP:- Animation exist AssignCookie.html
+    public int findContentChildren(int[] g, int[] s) {
+        int n = g.length;
+        int m = s.length;
+        Arrays.sort(g);
+        Arrays.sort(s);
+        int[][] dp = new int[n+1][m+1];
+
+        for(int i = n-1; i >= 0; i--){
+            for(int j = m-1; j >= 0; j--){
+                int skip = dp[i][j+1];
+                int take = 0;
+                if(s[j] >= g[i]){
+                    take = 1 + dp[i+1][j+1];
+                }
+                dp[i][j] = Math.max(skip, take);
+            }
+        }
+        return dp[0][0];
+    }
+
+//Space Opt
+    public int findContentChildren(int[] g, int[] s) {
+        int n = g.length;
+        int m = s.length;
+        Arrays.sort(g);
+        Arrays.sort(s);
+        int[] next = new int[m+1];
+        int prev = 0;
+        for(int i = n-1; i >= 0; i--){
+            int[] curr = new int[m+1];
+            prev = 0;
+            for(int j = m-1; j >= 0; j--){
+                int skip = prev;
+                int take = 0;
+                if(s[j] >= g[i]){
+                    take = 1 + next[j+1];
+                }
+                curr[j] = Math.max(skip, take);
+                prev = curr[j];
+            }
+            next = curr;
+        }
+        return next[0];
+    }
