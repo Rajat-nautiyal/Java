@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flatten a Sorted Linked List — Merge-by-Merge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#F4EEDF;
+    --paper:#FFFDF7;
+    --ink:#2A2015;
+    --ink-soft:#6b5f4d;
+    --ledger:#D8CBAE;
+    --ledger-strong:#c2b394;
+    --blue-milk:#3E6E8E;
+    --blue-milk-soft:#dbe8ef;
+    --gold-coin:#B98527;
+    --gold-coin-soft:#f3e3c2;
+    --take-green:#4F8A5B;
+    --take-green-soft:#e0eee2;
+    --skip-slate:#867A63;
+    --skip-slate-soft:#eae5d8;
+    --stamp-final:#8C3B3B;
+    --shadow: 0 2px 0 rgba(42,32,21,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    background-image:
+      linear-gradient(var(--ledger) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ledger) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 20px 60px;
+  }
+  .wrap{max-width:1260px;margin:0 auto;}
+
+  header{margin-bottom:18px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--blue-milk);font-weight:600;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--blue-milk);display:inline-block;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,4vw,38px);margin:8px 0 10px;letter-spacing:-0.01em;}
+  h1 em{font-style:italic;color:var(--gold-coin);font-weight:500;}
+  .sub{max-width:760px;color:var(--ink-soft);font-size:15px;line-height:1.55;}
+
+  .card{background:var(--paper);border:1px solid var(--ledger-strong);border-radius:10px;box-shadow:var(--shadow);}
+
+  .controls{
+    position:sticky;top:12px;z-index:30;margin:0 0 16px;padding:12px 18px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--paper);box-shadow:0 4px 14px rgba(42,32,21,0.12);
+  }
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;
+    border:1px solid var(--ledger-strong);background:var(--paper);color:var(--ink);
+    padding:9px 14px;border-radius:7px;cursor:pointer;
+    transition:background .15s ease, transform .1s ease, color .15s ease, border-color .15s ease;
+  }
+  .btn:hover{border-color:var(--blue-milk);color:var(--blue-milk);}
+  .btn:active{transform:translateY(1px);}
+  .btn:focus-visible{outline:2px solid var(--blue-milk);outline-offset:2px;}
+  .btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .btn.primary:hover{background:var(--blue-milk);border-color:var(--blue-milk);color:#fff;}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn:disabled:hover{border-color:var(--ledger-strong);color:var(--ink);}
+  .speed-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;}
+  input[type=range]{accent-color:var(--blue-milk);}
+  .progress{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+
+  .stepper{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .stepper .stage{
+    flex:1;min-width:200px;padding:10px 14px;border-radius:8px;
+    border:1px solid var(--ledger-strong);background:var(--paper);
+    font-size:12.5px;color:var(--ink-soft);transition:all .3s ease;
+  }
+  .stepper .stage b{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;color:var(--ink-soft);}
+  .stepper .stage.on{background:var(--gold-coin-soft);border-color:var(--gold-coin);color:var(--ink);}
+  .stepper .stage.on b{color:var(--gold-coin);}
+  .stepper .stage.done{background:var(--take-green-soft);border-color:var(--take-green);color:var(--ink-soft);}
+  .stepper .stage.done b{color:var(--take-green);}
+
+  main{display:grid;grid-template-columns: 1fr 340px;gap:16px;align-items:start;}
+  @media(max-width:980px){ main{grid-template-columns:1fr;} }
+
+  .diagram-card{padding:18px;}
+  .diagram-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;}
+  .diagram-head-row h2{font-family:'Fraunces',serif;font-weight:600;font-size:18px;margin:0;}
+  .phase-pill{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;
+    padding:5px 12px;border-radius:20px;background:var(--blue-milk-soft);color:var(--blue-milk);
+    transition:background .3s ease, color .3s ease;
+  }
+  .phase-pill.setup{background:var(--skip-slate-soft);color:var(--skip-slate);}
+  .phase-pill.outer{background:var(--blue-milk-soft);color:var(--blue-milk);}
+  .phase-pill.inner{background:var(--gold-coin-soft);color:var(--gold-coin);}
+  .diagram-scroll{overflow-x:auto;border:1px solid var(--ledger);border-radius:8px;}
+  svg#diagramSvg{display:block; overflow:visible;}
+
+  .node-rect{stroke-width:2.2px;transition:fill .35s ease, stroke .35s ease;}
+  .node-rect.pending{fill:var(--skip-slate-soft); stroke:var(--skip-slate); opacity:0.55;}
+  .node-rect.result{fill:var(--take-green-soft); stroke:var(--take-green);}
+  .node-rect.l1{fill:var(--blue-milk-soft); stroke:var(--blue-milk);}
+  .node-rect.l2{fill:var(--gold-coin-soft); stroke:var(--gold-coin);}
+  .node-rect.dummy{fill:var(--paper); stroke:var(--ink-soft); stroke-dasharray:4 3;}
+  .node-rect.current-temp{stroke-width:3px; filter:drop-shadow(0 0 4px var(--ink));}
+  .node-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;fill:var(--ink);}
+  .node-id{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;fill:var(--ink-soft);}
+  .node-group{transition:opacity .3s ease;}
+  .node-group.hidden{opacity:0; pointer-events:none;}
+
+  .arrow-bottom{stroke:var(--ink);stroke-width:2.4px;fill:none;}
+  .arrow-next{stroke:var(--ink-soft);stroke-width:1.4px;fill:none;stroke-dasharray:3 4;opacity:0.4;}
+
+  .ptr-badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;fill:#fff;}
+  .ptr-bg.prev{fill:var(--take-green);}
+  .ptr-bg.curr{fill:var(--stamp-final);}
+  .ptr-bg.l1{fill:var(--blue-milk);}
+  .ptr-bg.l2{fill:var(--gold-coin);}
+  .ptr-bg.temp{fill:var(--ink);}
+  .ptr-bg.dummy{fill:var(--skip-slate);}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:12px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+
+  aside{display:flex;flex-direction:column;gap:16px;}
+  .code-card{padding:16px 0;}
+  .code-card .label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-soft);padding:0 16px 10px;border-bottom:1px solid var(--ledger);margin-bottom:4px;
+  }
+  pre.code{margin:0;padding:6px 0 10px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.55;overflow-x:auto;max-height:560px;overflow-y:auto;}
+  pre.code .line{
+    display:block;padding:1px 16px;white-space:pre;color:var(--ink-soft);
+    border-left:3px solid transparent;transition:background .25s ease, color .2s ease, border-color .2s ease;
+  }
+  pre.code .line.active{background:var(--gold-coin-soft);color:var(--ink);border-left:3px solid var(--gold-coin);font-weight:600;}
+
+  .info-card{padding:16px;}
+  .info-card .label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-soft);margin-bottom:8px;
+  }
+  .info-text{font-size:14px;line-height:1.55;min-height:76px;}
+  .info-text b{color:var(--blue-milk);}
+  .answer-banner{
+    display:none;margin-top:10px;padding:10px 12px;border-radius:8px;
+    background:var(--stamp-final);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;line-height:1.5;
+  }
+  .answer-banner.show{display:block;}
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">GFG · Flatten a Multilevel Sorted Linked List</div>
+    <h1>Flatten a Sorted Linked List — <em>merge, one column at a time</em></h1>
+    <p class="sub">Every column is already sorted top-to-bottom via <code>bottom</code> pointers; columns are chained left-to-right via <code>next</code>. The trick: repeatedly <b>merge</b> the flattened-so-far list with the next column, exactly like merging two sorted lists — just walking <code>bottom</code> instead of <code>next</code>.</p>
+  </header>
+
+  <div class="card controls">
+    <button class="btn" id="resetBtn">⟲ Reset</button>
+    <button class="btn" id="stepBackBtn">◀ Step</button>
+    <button class="btn primary" id="playBtn">▶ Play</button>
+    <button class="btn" id="stepFwdBtn">Step ▶</button>
+    <div class="speed-wrap">
+      Speed
+      <input type="range" id="speedSlider" min="150" max="1000" value="420" step="20">
+    </div>
+    <div class="progress" id="progressText">Step 0 / 0</div>
+  </div>
+
+  <div class="stepper">
+    <div class="stage" id="stageSetup"><b>1 · Setup</b>prev = root, curr = root.next</div>
+    <div class="stage" id="stageOuter"><b>2 · Flatten loop</b>merge prev with curr, advance curr</div>
+    <div class="stage" id="stageInner"><b>3 · merge()</b>interleave two sorted lists via bottom</div>
+  </div>
+
+  <main>
+    <div class="card diagram-card">
+      <div class="diagram-head-row">
+        <h2>Node grid</h2>
+        <span class="phase-pill" id="phasePill">Setup</span>
+      </div>
+      <div class="diagram-scroll">
+        <svg id="diagramSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--skip-slate-soft);border:1px solid var(--skip-slate);opacity:.6;"></i>not reached yet</span>
+        <span><i class="swatch" style="background:var(--blue-milk-soft);border:1px solid var(--blue-milk);"></i>l1 (merged-so-far)</span>
+        <span><i class="swatch" style="background:var(--gold-coin-soft);border:1px solid var(--gold-coin);"></i>l2 (next column)</span>
+        <span><i class="swatch" style="background:var(--take-green-soft);border:1px solid var(--take-green);"></i>settled into result</span>
+        <span><i class="swatch" style="background:var(--paper);border:2px dashed var(--ink-soft);"></i>dummy (scratch node)</span>
+        <span><i style="display:inline-block;width:16px;border-top:2.4px solid var(--ink);"></i>bottom pointer</span>
+        <span><i style="display:inline-block;width:16px;border-top:1.4px dashed var(--ink-soft);"></i>next pointer (column heads)</span>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card code-card">
+        <div class="label">Solution.java</div>
+        <pre class="code" id="codeHost"></pre>
+      </div>
+      <div class="card info-card">
+        <div class="label">What's happening</div>
+        <div class="info-text" id="infoText">Press play to walk through the algorithm.</div>
+        <div class="answer-banner" id="answerBanner"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+const CODE_LINES = [
+  {n:1,  text:"class Solution {"},
+  {n:2,  text:"    public Node merge(Node l1, Node l2) {"},
+  {n:3,  text:"        Node dummyNode = new Node(-1);"},
+  {n:4,  text:"        Node temp = dummyNode;"},
+  {n:5,  text:"        while (l1 != null && l2 != null) {"},
+  {n:6,  text:"            if (l1.data <= l2.data) {"},
+  {n:7,  text:"                temp.bottom = l1;"},
+  {n:8,  text:"                l1 = l1.bottom;"},
+  {n:9,  text:"            } else {"},
+  {n:10, text:"                temp.bottom = l2;"},
+  {n:11, text:"                l2 = l2.bottom;"},
+  {n:12, text:"            }"},
+  {n:13, text:"            temp = temp.bottom;"},
+  {n:14, text:"        }"},
+  {n:15, text:"        if (l1 == null) temp.bottom = l2;"},
+  {n:16, text:"        else temp.bottom = l1;"},
+  {n:17, text:"        return dummyNode.bottom;"},
+  {n:18, text:"    }"},
+  {n:19, text:""},
+  {n:20, text:"    public Node flatten(Node root) {"},
+  {n:21, text:"        if (root == null) return root;"},
+  {n:22, text:"        Node prev = root;"},
+  {n:23, text:"        Node curr = root.next;"},
+  {n:24, text:"        while (curr != null) {"},
+  {n:25, text:"            Node node = merge(prev, curr);"},
+  {n:26, text:"            prev = node;"},
+  {n:27, text:"            curr = curr.next;"},
+  {n:28, text:"        }"},
+  {n:29, text:"        return prev;"},
+  {n:30, text:"    }"},
+  {n:31, text:"}"},
+];
+
+const CODE_MAP = {
+  'merge-dummy':[3], 'merge-temp':[4], 'merge-args':[2],
+  'merge-while':[5], 'merge-cmp':[6],
+  'merge-take-l1':[7], 'merge-adv-l1':[8],
+  'merge-take-l2':[10], 'merge-adv-l2':[11],
+  'merge-adv-temp':[13],
+  'merge-tail-l2':[15], 'merge-tail-l1':[16],
+  'merge-return':[17],
+  'flatten-null-check':[21], 'flatten-prev':[22], 'flatten-curr':[23],
+  'flatten-loop':[24], 'flatten-call-merge':[25],
+  'flatten-prev-update':[26], 'flatten-curr-advance':[27],
+  'flatten-return':[29],
+};
+
+const codeHost = document.getElementById('codeHost');
+CODE_LINES.forEach(l=>{
+  const span = document.createElement('span');
+  span.className = 'line';
+  span.dataset.line = l.n;
+  span.textContent = l.text.length ? l.text : ' ';
+  codeHost.appendChild(span);
+});
+function highlightCode(codeKey){
+  const active = new Set(CODE_MAP[codeKey] || []);
+  codeHost.querySelectorAll('.line').forEach(el=>{
+    el.classList.toggle('active', active.has(Number(el.dataset.line)));
+  });
+}
+
+// ---------- build the exact algorithm trace ----------
+function buildSteps(){
+  const columns = [
+    [5,7,8,30],
+    [10,20],
+    [19,22,50],
+    [28,35,40,45],
+  ];
+  const grid = columns.map((colVals,ci)=>
+    colVals.map((v,ri)=>({id:`C${ci}R${ri}`, val:v, next:null, bottom:null, col:ci, row:ri}))
+  );
+  grid.forEach(colNodes=>{
+    for(let r=0;r<colNodes.length-1;r++) colNodes[r].bottom = colNodes[r+1];
+  });
+  for(let c=0;c<grid.length-1;c++) grid[c][0].next = grid[c+1][0];
+  const root = grid[0][0];
+  const initialState = {};
+  grid.flat().forEach(nd => {
+    initialState[nd.id] = { val: nd.val, bottom: nd.bottom ? nd.bottom.id : null, next: nd.next ? nd.next.id : null, col: nd.col, row: nd.row };
+  });
+
+  const steps = [];
+  const push = s => steps.push(s);
+  let mergeCallCount = 0;
+
+  function merge(l1in, l2in){
+    mergeCallCount++;
+    const dummyId = 'DUMMY'+mergeCallCount;
+    const dummy = {id:dummyId, val:-1, bottom:null};
+    push({type:'create-dummy', id:dummyId, code:'merge-dummy', info:`merge(${l1in.id}=${l1in.val}, ${l2in.id}=${l2in.val}): dummyNode = new Node(-1) — throwaway scratch node.`});
+    let temp = dummy;
+    push({type:'advance-generic', var:'temp', id:temp.id, code:'merge-temp', info:'temp = dummyNode — temp always points at the current tail of the merged list.'});
+    let l1 = l1in, l2 = l2in;
+    push({type:'advance-generic', var:'l1', id:l1.id, code:'merge-args', info:`l1 = ${l1.id} (val ${l1.val}).`});
+    push({type:'advance-generic', var:'l2', id:l2.id, code:'merge-args', info:`l2 = ${l2.id} (val ${l2.val}).`});
+    while(l1 !== null && l2 !== null){
+      push({code:'merge-while', info:`while: l1(${l1.val}) and l2(${l2.val}) both still have nodes left.`});
+      if(l1.val <= l2.val){
+        push({code:'merge-cmp', info:`${l1.val} ≤ ${l2.val} → take the node from l1.`});
+        temp.bottom = l1;
+        push({type:'set-bottom', id:temp.id, bottom:l1.id, code:'merge-take-l1', info:`${temp.id}.bottom = l1 → attach ${l1.id}.`});
+        l1 = l1.bottom;
+        push({type:'advance-generic', var:'l1', id: l1?l1.id:null, code:'merge-adv-l1',
+          info: l1 ? `l1 = l1.bottom → ${l1.id} (val ${l1.val}).` : 'l1 = l1.bottom → null, l1 is exhausted.'});
+      } else {
+        push({code:'merge-cmp', info:`${l1.val} > ${l2.val} → take the node from l2.`});
+        temp.bottom = l2;
+        push({type:'set-bottom', id:temp.id, bottom:l2.id, code:'merge-take-l2', info:`${temp.id}.bottom = l2 → attach ${l2.id}.`});
+        l2 = l2.bottom;
+        push({type:'advance-generic', var:'l2', id: l2?l2.id:null, code:'merge-adv-l2',
+          info: l2 ? `l2 = l2.bottom → ${l2.id} (val ${l2.val}).` : 'l2 = l2.bottom → null, l2 is exhausted.'});
+      }
+      temp = temp.bottom;
+      push({type:'advance-generic', var:'temp', id:temp.id, code:'merge-adv-temp', info:`temp = temp.bottom → tail is now ${temp.id}.`});
+    }
+    if(l1 === null){
+      temp.bottom = l2;
+      push({type:'set-bottom', id:temp.id, bottom: l2?l2.id:null, code:'merge-tail-l2',
+        info: l2 ? `l1 is empty → ${temp.id}.bottom = l2, attach the rest of l2 (${l2.id}) in one go.` : `l1 is empty and l2 is empty too → ${temp.id}.bottom = null.`});
+    } else {
+      temp.bottom = l1;
+      push({type:'set-bottom', id:temp.id, bottom: l1.id, code:'merge-tail-l1',
+        info:`l2 is empty → ${temp.id}.bottom = l1, attach the rest of l1 (${l1.id}) in one go.`});
+    }
+    const result = dummy.bottom;
+    push({code:'merge-return', info:`return dummyNode.bottom → this merge's sorted list starts at ${result.id} (val ${result.val}).`});
+    return result;
+  }
+
+  push({type:'phase', phase:'setup', code:'flatten-null-check', info:'root != null, so we continue.'});
+  let prev = root;
+  push({type:'advance-generic', var:'prev', id:prev.id, code:'flatten-prev', info:`prev = root (${prev.id}) — the flattened list so far is just column 0.`});
+  let curr = root.next;
+  push({type:'advance-generic', var:'curr', id: curr?curr.id:null, code:'flatten-curr',
+    info: curr ? `curr = root.next (${curr.id}) — the next column waiting to be folded in.` : 'curr = root.next → null, only one column exists.'});
+
+  push({type:'phase', phase:'outer', code:'flatten-loop', info:'<b>Flatten loop:</b> fold one more column into the merged result each time round.'});
+  let colNum = 0;
+  while(curr !== null){
+    colNum++;
+    push({code:'flatten-loop', info:`Column ${colNum}: merge everything flattened so far with the column starting at ${curr.id} (val ${curr.val}).`});
+    push({type:'phase', phase:'inner', code:'flatten-call-merge', info:'Call merge(prev, curr) — see the merge() phase below.'});
+    const node = merge(prev, curr);
+    push({type:'phase', phase:'outer', code:'flatten-loop', info:'Back in the flatten loop with the newly merged list.'});
+    prev = node;
+    push({type:'advance-generic', var:'prev', id:prev.id, code:'flatten-prev-update', info:`prev = node → ${prev.id}, the head of the merged result so far.`});
+    curr = curr.next;
+    push({type:'advance-generic', var:'curr', id: curr?curr.id:null, code:'flatten-curr-advance',
+      info: curr ? `curr = curr.next → next column starts at ${curr.id}.` : 'curr = curr.next → null, every column has been folded in.'});
+  }
+
+  push({type:'final', code:'flatten-return', info:`Done! <b>prev</b> is the head of the fully flattened, sorted list.`});
+
+  return {steps, grid, columns, root, initialState};
+}
+
+// ---------- replay state ----------
+function computeStateAt(built, idx){
+  const state = {};
+  Object.keys(built.initialState).forEach(id=>{
+    const s = built.initialState[id];
+    state[id] = { val: s.val, bottom: s.bottom, next: s.next, kind:'grid', col:s.col, row:s.row };
+  });
+  const vars = {prev:null, curr:null, l1:null, l2:null, temp:null, dummy:null};
+  let phase = 'setup';
+  let colNum = 0;
+  for(let i=0;i<=idx;i++){
+    const ev = built.steps[i];
+    if(!ev) continue;
+    if(ev.type==='create-dummy'){
+      state[ev.id] = { val:-1, bottom:null, next:null, kind:'dummy' };
+      vars.dummy = ev.id;
+    } else if(ev.type==='set-bottom'){
+      state[ev.id].bottom = ev.bottom;
+    } else if(ev.type==='advance-generic'){
+      vars[ev.var] = ev.id;
+    } else if(ev.type==='phase'){
+      phase = ev.phase;
+    }
+    if(ev.code==='flatten-prev-update') colNum++;
+  }
+  return {state, vars, phase, colNum};
+}
+
+// ---------- layout ----------
+const NODE_W=58, NODE_H=40;
+const COL_START=190, COL_GAP=175;
+const ROW_START=110, ROW_GAP=78;
+const DUMMY_X=55, DUMMY_Y=110;
+
+function nodePos(built, id){
+  if(id.startsWith('DUMMY')) return {x:DUMMY_X, y:DUMMY_Y};
+  const nd = built.grid.flat().find(n=>n.id===id);
+  return {x:COL_START+nd.col*COL_GAP, y:ROW_START+nd.row*ROW_GAP};
+}
+
+function edgePoint(cx,cy,tx,ty,w,h){
+  const dx=tx-cx, dy=ty-cy;
+  if(dx===0 && dy===0) return {x:cx,y:cy};
+  const halfW=w/2, halfH=h/2;
+  const sx = dx!==0 ? halfW/Math.abs(dx) : Infinity;
+  const sy = dy!==0 ? halfH/Math.abs(dy) : Infinity;
+  const s = Math.min(sx,sy);
+  return {x:cx+dx*s, y:cy+dy*s};
+}
+
+function buildStaticSVG(built){
+  const svg = document.getElementById('diagramSvg');
+  svg.innerHTML = '';
+  const maxRows = Math.max(...built.columns.map(c=>c.length));
+  const width = COL_START + (built.columns.length-1)*COL_GAP + 120;
+  const height = ROW_START + (maxRows-1)*ROW_GAP + 90;
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `
+    <marker id="arrowBottom" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/>
+    </marker>
+    <marker id="arrowNext" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/>
+    </marker>`;
+  svg.appendChild(defs);
+  svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg','g')).setAttribute('id','edgeLayer');
+  const nodeLayer = svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg','g'));
+  nodeLayer.setAttribute('id','nodeLayer');
+
+  const allIds = [...built.grid.flat().map(n=>n.id), 'DUMMY1','DUMMY2','DUMMY3'];
+  allIds.forEach(id=>{
+    const pos = nodePos(built, id);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','node-group');
+    g.dataset.id = id;
+    g.setAttribute('transform', `translate(${pos.x-NODE_W/2}, ${pos.y-NODE_H/2})`);
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('width', NODE_W); rect.setAttribute('height', NODE_H);
+    rect.setAttribute('rx', 8);
+    rect.setAttribute('class','node-rect pending');
+    g.appendChild(rect);
+
+    const idText = document.createElementNS('http://www.w3.org/2000/svg','text');
+    idText.setAttribute('class','node-id');
+    idText.setAttribute('x', NODE_W/2); idText.setAttribute('y', 11);
+    idText.setAttribute('text-anchor','middle');
+    idText.textContent = id.startsWith('DUMMY') ? 'dummy' : id;
+    g.appendChild(idText);
+
+    const valText = document.createElementNS('http://www.w3.org/2000/svg','text');
+    valText.setAttribute('class','node-val');
+    valText.setAttribute('x', NODE_W/2); valText.setAttribute('y', 29);
+    valText.setAttribute('text-anchor','middle');
+    valText.dataset.role='val';
+    g.appendChild(valText);
+
+    nodeLayer.appendChild(g);
+  });
+}
+
+function statusFor(node, colNum, phase){
+  if(node.col <= colNum) return phase==='inner' ? 'l1' : 'result';
+  if(node.col === colNum+1) return phase==='inner' ? 'l2' : 'pending';
+  return 'pending';
+}
+
+let built, stepIndex, playing=false, timer=null;
+
+function init(){
+  built = buildSteps();
+  stepIndex = 0;
+  playing = false;
+  clearInterval(timer);
+  updatePlayBtn();
+  buildStaticSVG(built);
+  render();
+}
+
+function render(){
+  const step = built.steps[stepIndex];
+  highlightCode(step.code);
+  document.getElementById('infoText').innerHTML = step.info;
+
+  const banner = document.getElementById('answerBanner');
+  if(step.type==='final'){
+    banner.textContent = 'Flattened: 5→7→8→10→19→20→22→28→30→35→40→45→50';
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+
+  const snap = computeStateAt(built, stepIndex);
+
+  const pill = document.getElementById('phasePill');
+  const pillLabel = {setup:'Setup', outer:'Flatten loop', inner:'merge()'};
+  pill.textContent = pillLabel[snap.phase];
+  pill.className = 'phase-pill ' + snap.phase;
+
+  ['stageSetup','stageOuter','stageInner'].forEach((elId,i)=>{
+    const el = document.getElementById(elId);
+    const stagePhase = ['setup','outer','inner'][i];
+    el.classList.remove('on','done');
+    if(snap.phase===stagePhase) el.classList.add('on');
+    else if((stagePhase==='setup') || (stagePhase==='outer' && snap.phase==='inner') ) el.classList.add('done');
+  });
+
+  // node visuals
+  built.grid.flat().forEach(nd=>{
+    const g = document.querySelector(`.node-group[data-id="${nd.id}"]`);
+    const rect = g.querySelector('.node-rect');
+    const status = statusFor(nd, snap.colNum, snap.phase);
+    rect.setAttribute('class', 'node-rect ' + status + (snap.vars.temp===nd.id ? ' current-temp' : ''));
+    g.classList.remove('hidden');
+    g.querySelector('[data-role="val"]').textContent = nd.val;
+  });
+  ['DUMMY1','DUMMY2','DUMMY3'].forEach(did=>{
+    const g = document.querySelector(`.node-group[data-id="${did}"]`);
+    const visible = did===snap.vars.dummy && snap.phase==='inner';
+    g.classList.toggle('hidden', !visible);
+    if(visible){
+      const rect = g.querySelector('.node-rect');
+      rect.setAttribute('class','node-rect dummy' + (snap.vars.temp===did ? ' current-temp' : ''));
+    }
+  });
+
+  // arrows
+  const svg = document.getElementById('diagramSvg');
+  const layer = svg.querySelector('#edgeLayer');
+  layer.innerHTML = '';
+
+  function addPath(a,b,cls,marker){
+    const p1 = edgePoint(a.x,a.y,b.x,b.y,NODE_W,NODE_H);
+    const p2 = edgePoint(b.x,b.y,a.x,a.y,NODE_W,NODE_H);
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`);
+    path.setAttribute('class', cls);
+    path.setAttribute('marker-end', `url(#${marker})`);
+    layer.appendChild(path);
+  }
+
+  // static next pointers (column heads only) — always shown, subdued
+  built.grid.forEach(col=>{
+    const nd = col[0];
+    if(nd.next){
+      addPath(nodePos(built,nd.id), nodePos(built,nd.next.id), 'arrow-next', 'arrowNext');
+    }
+  });
+
+  // dynamic bottom pointers
+  Object.keys(snap.state).forEach(id=>{
+    if(id.startsWith('DUMMY') && !(id===snap.vars.dummy && snap.phase==='inner')) return;
+    const nd = snap.state[id];
+    if(!nd.bottom) return;
+    if(!snap.state[nd.bottom]) return;
+    addPath(nodePos(built,id), nodePos(built,nd.bottom), 'arrow-bottom', 'arrowBottom');
+  });
+
+  // pointer badges
+  const outerVars = ['prev','curr'];
+  const innerVars = ['l1','l2','temp','dummy'];
+  const active = snap.phase==='inner' ? innerVars : outerVars;
+  const groupsByNode = {};
+  active.forEach(v=>{
+    const id = snap.vars[v];
+    if(id===null || id===undefined) return;
+    groupsByNode[id] = groupsByNode[id] || [];
+    groupsByNode[id].push(v);
+  });
+  Object.keys(groupsByNode).forEach(id=>{
+    const pos = nodePos(built, id);
+    const names = groupsByNode[id];
+    names.forEach((varName, i)=>{
+      const dx = NODE_W/2 + 30;
+      const dy = (i - (names.length-1)/2) * 24;
+      const bx = pos.x + dx, by = pos.y + dy;
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx', bx); circle.setAttribute('cy', by); circle.setAttribute('r', 12.5);
+      circle.setAttribute('class','ptr-bg ' + varName);
+      g.appendChild(circle);
+      const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+      text.setAttribute('x', bx); text.setAttribute('y', by+3.5);
+      text.setAttribute('text-anchor','middle');
+      text.setAttribute('class','ptr-badge');
+      text.textContent = varName==='temp' ? 'tp' : varName==='dummy' ? 'dm' : varName;
+      g.appendChild(text);
+      layer.appendChild(g);
+    });
+  });
+
+  document.getElementById('progressText').textContent = `Step ${stepIndex} / ${built.steps.length-1}`;
+  document.getElementById('stepBackBtn').disabled = stepIndex===0;
+  document.getElementById('stepFwdBtn').disabled = stepIndex===built.steps.length-1;
+}
+
+function updatePlayBtn(){ document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Play'; }
+function stepForward(){ if(stepIndex < built.steps.length-1){ stepIndex++; render(); } else { stop(); } }
+function stepBack(){ if(stepIndex>0){ stepIndex--; render(); } }
+function stop(){ playing=false; clearInterval(timer); updatePlayBtn(); }
+function play(){
+  if(stepIndex >= built.steps.length-1) stepIndex = 0;
+  playing = true; updatePlayBtn();
+  const speed = Number(document.getElementById('speedSlider').value);
+  clearInterval(timer);
+  timer = setInterval(()=>{
+    if(stepIndex >= built.steps.length-1){ stop(); render(); return; }
+    stepForward();
+  }, speed);
+}
+
+document.getElementById('playBtn').addEventListener('click', ()=> playing ? stop() : play());
+document.getElementById('stepFwdBtn').addEventListener('click', ()=>{ stop(); stepForward(); });
+document.getElementById('stepBackBtn').addEventListener('click', ()=>{ stop(); stepBack(); });
+document.getElementById('resetBtn').addEventListener('click', ()=>{ stop(); stepIndex=0; render(); });
+document.getElementById('speedSlider').addEventListener('input', ()=>{ if(playing) play(); });
+
+init();
+</script>
+</body>
+</html>

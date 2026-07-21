@@ -1,6 +1,6 @@
 214. Shortest Palindrome
 
-//Opt app: KMP
+//Opt app: KMP , animation exist
 IDEA:(also for brute)
 *> Compare s string (from end part) to reverse(s) string (from front part);
 *> if they are same , return reverse.substring(0,i)(front part which was rejected) + s

@@ -1,0 +1,37 @@
+516. Longest Palindromic Subsequence
+
+Intuition:- //Just reverse s rev(s) and then find LCS blw both string
+
+//Tabulation Approach
+class Solution {
+    public String reverse(char[] s){
+        int l = 0;
+        int r = s.length - 1;        
+        while(l < r){
+            char t = s[l];
+            s[l] = s[r];
+            s[r] = t;
+            l++;
+            r--;
+        }
+        return new String(s);
+    }
+    public int longestPalindromeSubseq(String s) {
+        String rev = reverse(s.toCharArray());
+        int n = s.length();        
+        int[][] dp = new int[n+1][n+1];
+        int ans = 0;        
+        for(int i = 1; i <= n; i++){
+            for(int j = 1; j <= n; j++){
+                if(s.charAt(i-1) == rev.charAt(j-1)){
+                    dp[i][j] = 1 + dp[i-1][j-1];
+                    ans = Math.max(ans, dp[i][j]);
+                }else{
+                    dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                }
+            }
+        }
+        return ans;
+    }
+}
+//space opt is possible as well

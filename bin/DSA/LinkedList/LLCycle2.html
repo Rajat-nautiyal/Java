@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Detect Cycle Animation</title>
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+    color: #e5e7eb;
+  }
+  .box {
+    max-width: 950px;
+    margin: auto;
+  background: #111827;
+  border: 1px solid #38bdf8;
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .controls, .status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  input, select, button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #93c5fd;
+    font-size: 15px;
+  }
+  button {
+    background: #2563eb;
+    color: white;
+    border: 0;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  button.secondary { background: #475569; }
+  .step {
+  background: #1f2937;
+  border: 1px solid #38bdf8;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+  .pill {
+    background: #ffffff99;
+    border: 1px solid #93c5fd;
+    border-radius: 999px;
+    padding: 5px 10px;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+  background: #ba6db2;
+    border-radius: 14px;
+  }
+  .link {
+    fill: none;
+    stroke: #64748b;
+    stroke-width: 2;
+    marker-end: url(#arrow);
+  }
+  .loop { stroke: #2563eb; }
+  .node rect {
+  fill: #b09090;
+  stroke: #5b95e6;
+    stroke-width: 1.5;
+  }
+  .node text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-weight: 700;
+    fill: #172033;
+  }
+  .node.slow rect { fill: #bbf7d0; }
+  .node.fast rect { fill: #bfdbfe; }
+  .node.temp rect { fill: #fde68a; }
+  .node.hit rect {
+    fill: #c4b5fd;
+    stroke: #7c3aed;
+    stroke-width: 3;
+  }
+  .label {
+    fill: #475569;
+    font-size: 13px;
+    text-anchor: middle;
+  }
+  .pointer {
+    transition: transform 0.45s ease, opacity 0.2s;
+  }
+  .pointer rect {
+    rx: 7;
+    stroke: #64748b;
+  }
+  .pointer text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-weight: 700;
+    fill: #172033;
+    font-size: 13px;
+  }
+  .slowPtr rect { fill: #bbf7d0; }
+  .fastPtr rect { fill: #bfdbfe; }
+  .tempPtr rect { fill: #fde68a; }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="controls">
+    <label>
+      Values:
+      <input id="values" value="3,2,0,-4,7,9">
+    </label>
+
+    <label>
+      Cycle starts at index:
+      <select id="entry">
+        <option value="0">0</option>
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="-1">no cycle</option>
+      </select>
+    </label>
+
+    <button onclick="build()">Build</button>
+    <button class="secondary" onclick="prevStep()">Prev</button>
+    <button class="secondary" onclick="togglePlay()" id="playBtn">Play</button>
+    <button class="secondary" onclick="nextStep()">Next</button>
+    <button class="secondary" onclick="goEnd()">End</button>
+  </div>
+
+  <div class="step">
+    <b>Current step:</b>
+    <div id="text">Build a linked list and watch slow/fast pointers move.</div>
+    <div class="status">
+      <span class="pill">phase: <b id="phase">search</b></span>
+      <span class="pill">t: <b id="slowVal">head</b></span>
+      <span class="pill">h: <b id="fastVal">head</b></span>
+      <span class="pill">return: <b id="retVal">?</b></span>
+      <span class="pill">step: <b id="stepNo">1</b></span>
+    </div>
+  </div>
+
+  <svg id="svg" viewBox="0 0 900 320">
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#64748b"></path>
+      </marker>
+    </defs>
+    <g id="links"></g>
+    <g id="nodes"></g>
+    <g id="pointers"></g>
+  </svg>
+</div>
+
+<script>
+const svg = document.getElementById("svg");
+const links = document.getElementById("links");
+const nodesLayer = document.getElementById("nodes");
+const pointers = document.getElementById("pointers");
+
+const W = 56, H = 42;
+let nodes = [];
+let steps = [];
+let current = 0;
+let timer = null;
+
+function make(tag, attrs = {}) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+function parseValues() {
+  const arr = document.getElementById("values").value
+    .split(",")
+    .map(x => Number(x.trim()))
+    .filter(Number.isFinite)
+    .slice(0, 8);
+  return arr.length ? arr : [3, 2, 0, -4, 7, 9];
+}
+
+function nextOf(i, entry) {
+  if (i == null) return null;
+  if (i < nodes.length - 1) return i + 1;
+  return entry >= 0 ? entry : null;
+}
+
+function valueOf(i) {
+  return i == null ? "null" : nodes[i].val;
+}
+
+function layout(values) {
+  const width = Math.max(600, values.length * 105 + 80);
+  svg.setAttribute("viewBox", `0 0 ${width} 320`);
+  const startX = (width - values.length * 105) / 2 + 20;
+  const entry = Number(document.getElementById("entry").value);
+
+  nodes = values.map((v, i) => ({
+    val: v,
+    x: startX + i * 105,
+    y: i >= entry && entry >= 0 && i % 2 === 1 ? 98 : 142
+  }));
+}
+
+function simulate() {
+  const entry = Number(document.getElementById("entry").value);
+  let t = 0, h = 0;
+  const out = [];
+
+  out.push({
+    phase: "search",
+    t, h, temp: null, ret: "?",
+    text: "Start: t and h both point to head."
+  });
+
+  while (h != null && nextOf(h, entry) != null && out.length < 30) {
+    t = nextOf(t, entry);
+    h = nextOf(nextOf(h, entry), entry);
+
+    out.push({
+      phase: "search",
+      t, h, temp: null, ret: "?",
+      text: `Move t one step and h two steps. t = ${valueOf(t)}, h = ${valueOf(h)}.`
+    });
+
+    if (t === h) {
+      out.push({
+        phase: "meet",
+        t, h, temp: null, ret: "?",
+        text: `t and h meet at ${valueOf(t)}. A cycle exists.`
+      });
+
+      let temp = 0;
+
+      out.push({
+        phase: "entry",
+        t, h, temp, ret: "?",
+        text: "Put temp at head. Move temp and h one step each."
+      });
+
+      while (temp !== h && out.length < 45) {
+        temp = nextOf(temp, entry);
+        h = nextOf(h, entry);
+
+        out.push({
+          phase: "entry",
+          t, h, temp, ret: "?",
+          text: `temp = ${valueOf(temp)}, h = ${valueOf(h)}.`
+        });
+      }
+
+      out.push({
+        phase: "return",
+        t, h, temp, ret: valueOf(temp),
+        text: `temp and h meet at ${valueOf(temp)}. Return this node.`
+      });
+
+      return out;
+    }
+  }
+
+  out.push({
+    phase: "return",
+    t, h, temp: null, ret: "null",
+    text: "h reached null. No cycle exists, so return null."
+  });
+
+  return out;
+}
+
+function pathBetween(a, b, loop) {
+  if (!loop) {
+    return `M${a.x + W},${a.y + H / 2} C${a.x + 75},${a.y + H / 2} ${b.x - 20},${b.y + H / 2} ${b.x - 6},${b.y + H / 2}`;
+  }
+
+  const top = Math.min(a.y, b.y) - 85;
+  return `M${a.x + W / 2},${a.y} C${a.x + 30},${top} ${b.x + 30},${top} ${b.x + W / 2},${b.y - 6}`;
+}
+
+function draw() {
+  links.innerHTML = "";
+  nodesLayer.innerHTML = "";
+  pointers.innerHTML = "";
+
+  const entry = Number(document.getElementById("entry").value);
+
+  for (let i = 0; i < nodes.length; i++) {
+    const nxt = nextOf(i, entry);
+    if (nxt != null) {
+      const loop = i === nodes.length - 1 && entry >= 0;
+      const p = make("path", {
+        d: pathBetween(nodes[i], nodes[nxt], loop),
+        class: loop ? "link loop" : "link"
+      });
+      links.appendChild(p);
+    }
+  }
+
+  nodes.forEach((node, i) => {
+    const g = make("g", { class: "node", id: "node-" + i });
+
+    g.appendChild(make("rect", {
+      x: node.x,
+      y: node.y,
+      width: W,
+      height: H,
+      rx: 9
+    }));
+
+    const text = make("text", {
+      x: node.x + W / 2,
+      y: node.y + H / 2
+    });
+    text.textContent = node.val;
+    g.appendChild(text);
+
+    const label = make("text", {
+      x: node.x + W / 2,
+      y: node.y + H + 18,
+      class: "label"
+    });
+    label.textContent = i === entry ? "entry" : "idx " + i;
+    g.appendChild(label);
+
+    nodesLayer.appendChild(g);
+  });
+
+  createPointer("slowPtr", "t", 34);
+  createPointer("fastPtr", "h", 34);
+  createPointer("tempPtr", "temp", 54);
+}
+
+function createPointer(cls, text, width) {
+  const g = make("g", { class: "pointer " + cls, id: cls });
+  g.appendChild(make("rect", { x: 0, y: 0, width, height: 24 }));
+  const t = make("text", { x: width / 2, y: 12 });
+  t.textContent = text;
+  g.appendChild(t);
+  pointers.appendChild(g);
+}
+
+function place(id, at, yOffset, xOffset = 10) {
+  const p = document.getElementById(id);
+  if (at == null) {
+    p.style.opacity = "0";
+    return;
+  }
+
+  p.style.opacity = "1";
+  p.style.transform = `translate(${nodes[at].x + xOffset}px, ${nodes[at].y + yOffset}px)`;
+}
+
+function render() {
+  const step = steps[current];
+  const entry = Number(document.getElementById("entry").value);
+
+  nodes.forEach((node, i) => {
+    const g = document.getElementById("node-" + i);
+    g.classList.remove("slow", "fast", "temp", "hit");
+
+    if (i === step.t) g.classList.add("slow");
+    if (i === step.h) g.classList.add("fast");
+    if (i === step.temp) g.classList.add("temp");
+    if ((step.phase === "meet" || step.phase === "return") && (i === step.h || i === step.temp)) {
+      g.classList.add("hit");
+    }
+  });
+
+  place("slowPtr", step.t, -30, 11);
+  place("fastPtr", step.h, -58, 11);
+  place("tempPtr", step.temp, H + 28, 1);
+
+  document.getElementById("text").textContent = step.text;
+  document.getElementById("phase").textContent = step.phase;
+  document.getElementById("slowVal").textContent = valueOf(step.t);
+  document.getElementById("fastVal").textContent = valueOf(step.h);
+  document.getElementById("retVal").textContent = step.ret;
+  document.getElementById("stepNo").textContent = `${current + 1} / ${steps.length}`;
+}
+
+function build() {
+  stopPlay();
+
+  const values = parseValues();
+  document.getElementById("values").value = values.join(", ");
+
+  const entry = Number(document.getElementById("entry").value);
+  if (entry >= values.length) document.getElementById("entry").value = values.length - 1;
+
+  layout(values);
+  steps = simulate();
+  current = 0;
+
+  draw();
+  render();
+}
+
+function nextStep() {
+  stopPlay();
+  if (current < steps.length - 1) {
+    current++;
+    render();
+  }
+}
+
+function prevStep() {
+  stopPlay();
+  if (current > 0) {
+    current--;
+    render();
+  }
+}
+
+function goEnd() {
+  stopPlay();
+  current = steps.length - 1;
+  render();
+}
+
+function togglePlay() {
+  if (timer) {
+    stopPlay();
+    return;
+  }
+
+  document.getElementById("playBtn").textContent = "Pause";
+
+  timer = setInterval(() => {
+    if (current >= steps.length - 1) {
+      stopPlay();
+    } else {
+      current++;
+      render();
+    }
+  }, 900);
+}
+
+function stopPlay() {
+  clearInterval(timer);
+  timer = null;
+  document.getElementById("playBtn").textContent = "Play";
+}
+
+document.getElementById("entry").addEventListener("change", build);
+build();
+</script>
+
+</body>
+</html>

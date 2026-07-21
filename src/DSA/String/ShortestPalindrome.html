@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Shortest Palindrome KMP Animation</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #dbeafe;
+    color: #172033;
+    padding: 24px;
+  }
+
+  .box {
+    max-width: 1000px;
+    margin: auto;
+    background: #eef6ff;
+    border: 1px solid #9ec5fe;
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 14px;
+  }
+
+  input {
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #8bb8f7;
+    font-size: 16px;
+  }
+
+  button {
+    padding: 9px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  button.secondary {
+    background: #475569;
+  }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .steps {
+    background: #d7ecff;
+    border: 1px solid #9ec5fe;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .result {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill {
+    background: #ffffff99;
+    border: 1px solid #9ec5fe;
+    border-radius: 999px;
+    padding: 5px 10px;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+    background: #e0f2fe;
+    border-radius: 14px;
+  }
+
+  .cell rect {
+    fill: #f8fbff;
+    stroke: #64748b;
+    stroke-width: 1.4;
+    transition: fill 0.25s, stroke 0.25s;
+  }
+
+  .cell text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-weight: 700;
+    fill: #172033;
+  }
+
+  .active rect {
+    fill: #bfdbfe;
+    stroke: #2563eb;
+    stroke-width: 2.5;
+  }
+
+  .match rect {
+    fill: #bbf7d0;
+  }
+
+  .fallback rect {
+    fill: #fed7aa;
+  }
+
+  .label {
+    fill: #475569;
+    font-size: 13px;
+  }
+
+  .pointer {
+    transition: transform 0.45s ease;
+  }
+
+  .pointer rect {
+    fill: #2563eb;
+    rx: 7;
+  }
+
+  .pointer text {
+    fill: white;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-weight: 700;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="controls">
+    <label>
+      Example string:<br />
+      <input id="inputStr" value="aacecaaa" maxlength="14" />
+    </label>
+
+    <button onclick="build()">Build</button>
+    <button class="secondary" onclick="prevStep()">Prev</button>
+    <button class="secondary" onclick="togglePlay()" id="playBtn">Play</button>
+    <button class="secondary" onclick="nextStep()">Next</button>
+    <button class="secondary" onclick="goEnd()">End</button>
+  </div>
+
+  <div class="steps">
+    <b>Current step:</b>
+    <div id="stepText">Build the combined string and run KMP LPS.</div>
+
+    <div class="result">
+      <span class="pill">rev prefix: <b id="addText"></b></span>
+      <span class="pill">s: <b id="originalText"></b></span>
+      <span class="pill">ans: rev.substring(0, s.length() - lps[n-1]) + s -> <b id="answerText"></b></span>
+      <span class="pill">step: <b id="stepNo"></b></span>
+    </div>
+  </div>
+
+  <svg id="svg" viewBox="0 0 900 280">
+    <g id="base"></g>
+    <g id="chars"></g>
+    <g id="lps"></g>
+    <g id="pointers"></g>
+  </svg>
+</div>
+
+<script>
+const svg = document.getElementById("svg");
+const base = document.getElementById("base");
+const charsLayer = document.getElementById("chars");
+const lpsLayer = document.getElementById("lps");
+const pointers = document.getElementById("pointers");
+
+const CELL = 38;
+const GAP = 6;
+const TOP = 70;
+const LPS_TOP = 165;
+
+let data = {};
+let current = 0;
+let timer = null;
+
+function make(tag, attrs = {}) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const key in attrs) el.setAttribute(key, attrs[key]);
+  return el;
+}
+
+function simulate(s) {
+  const rev = s.split("").reverse().join("");
+  const ns = s + "#" + rev;
+  const lps = Array(ns.length).fill(0);
+  const steps = [];
+
+  let len = 0;
+  let i = 1;
+
+  steps.push({
+    i,
+    len,
+    lps: [...lps],
+    type: "start",
+    text: `Create ns = "${s}" + "#" + "${rev}".`
+  });
+
+  while (i < ns.length) {
+    if (ns.charAt(len) === ns.charAt(i)) {
+      len++;
+      lps[i] = len;
+
+      steps.push({
+        i,
+        len,
+        lps: [...lps],
+        type: "match",
+        text: `"${ns[i]}" matches, so lps[${i}] becomes ${len}.`
+      });
+
+      i++;
+    } else {
+      if (len > 0) {
+        const old = len;
+        len = lps[len - 1];
+
+        steps.push({
+          i,
+          len,
+          lps: [...lps],
+          type: "fallback",
+          text: `Mismatch. len falls back from ${old} to ${len}. i stays same.`
+        });
+      } else {
+        lps[i] = 0;
+
+        steps.push({
+          i,
+          len,
+          lps: [...lps],
+          type: "zero",
+          text: `Mismatch and len is 0, so lps[${i}] = 0.`
+        });
+
+        i++;
+      }
+    }
+  }
+
+  const keep = lps[ns.length - 1];
+  const add = rev.substring(0, s.length - keep);
+
+  steps.push({
+    i: ns.length - 1,
+    len: keep,
+    lps: [...lps],
+    type: "done",
+    text: `lps[last] = ${keep}. Add "${add}" in front of s.`
+  });
+
+  return {
+    s,
+    rev,
+    ns,
+    lps,
+    steps,
+    add,
+    answer: add + s
+  };
+}
+
+function draw() {
+  base.innerHTML = "";
+  charsLayer.innerHTML = "";
+  lpsLayer.innerHTML = "";
+  pointers.innerHTML = "";
+
+  const n = data.ns.length;
+  const width = Math.max(620, n * (CELL + GAP) + 70);
+  svg.setAttribute("viewBox", `0 0 ${width} 280`);
+
+  const startX = (width - n * (CELL + GAP)) / 2;
+  data.startX = startX;
+
+  const title = make("text", { x: startX, y: 35, class: "label" });
+  title.textContent = "ns = s + # + reverse(s)";
+  base.appendChild(title);
+
+  const lpsTitle = make("text", { x: startX, y: LPS_TOP - 18, class: "label" });
+  lpsTitle.textContent = "LPS array";
+  base.appendChild(lpsTitle);
+
+  for (let j = 0; j < n; j++) {
+    const x = startX + j * (CELL + GAP);
+
+    const indexLabel = make("text", { x: x + CELL / 2, y: TOP - 12, class: "label" });
+    indexLabel.textContent = j;
+    base.appendChild(indexLabel);
+
+    const c = make("g", { class: "cell", id: "char-" + j });
+    c.appendChild(make("rect", { x, y: TOP, width: CELL, height: CELL, rx: 8 }));
+    const ct = make("text", { x: x + CELL / 2, y: TOP + CELL / 2 });
+    ct.textContent = data.ns[j];
+    c.appendChild(ct);
+    charsLayer.appendChild(c);
+
+    const l = make("g", { class: "cell", id: "lps-" + j });
+    l.appendChild(make("rect", { x, y: LPS_TOP, width: CELL, height: CELL, rx: 8 }));
+    const lt = make("text", { x: x + CELL / 2, y: LPS_TOP + CELL / 2 });
+    lt.textContent = "0";
+    l.appendChild(lt);
+    lpsLayer.appendChild(l);
+  }
+
+  const ip = make("g", { class: "pointer", id: "iPointer" });
+  ip.appendChild(make("rect", { x: 0, y: 0, width: 34, height: 24 }));
+  const it = make("text", { x: 17, y: 12 });
+  it.textContent = "i";
+  ip.appendChild(it);
+  pointers.appendChild(ip);
+
+  const lp = make("g", { class: "pointer", id: "lenPointer" });
+  lp.appendChild(make("rect", { x: 0, y: 0, width: 46, height: 24 }));
+  const lt = make("text", { x: 23, y: 12 });
+  lt.textContent = "len";
+  lp.appendChild(lt);
+  pointers.appendChild(lp);
+}
+
+function xFor(index) {
+  return data.startX + index * (CELL + GAP);
+}
+
+function render() {
+  const step = data.steps[current];
+
+  for (let j = 0; j < data.ns.length; j++) {
+    const charCell = document.getElementById("char-" + j);
+    const lpsCell = document.getElementById("lps-" + j);
+
+    charCell.classList.remove("active", "match", "fallback");
+    lpsCell.classList.remove("active", "match", "fallback");
+
+    if (j === step.i || j === step.len) charCell.classList.add("active");
+    if (step.type === "match" && (j === step.i || j === step.len - 1)) {
+      charCell.classList.add("match");
+    }
+    if (step.type === "fallback" && j === step.i) {
+      charCell.classList.add("fallback");
+    }
+
+    lpsCell.querySelector("text").textContent = step.lps[j] || 0;
+    if (j === step.i) lpsCell.classList.add("active");
+  }
+
+  const safeI = Math.min(step.i, data.ns.length - 1);
+  const safeLen = Math.min(step.len, data.ns.length - 1);
+
+  document.getElementById("iPointer").style.transform =
+    `translate(${xFor(safeI) + 2}px, ${TOP + CELL + 14}px)`;
+
+  document.getElementById("lenPointer").style.transform =
+    `translate(${xFor(safeLen) - 4}px, ${TOP - 48}px)`;
+
+  document.getElementById("stepText").textContent = step.text;
+  document.getElementById("stepNo").textContent = `${current + 1} / ${data.steps.length}`;
+  document.getElementById("addText").textContent = data.add || "nothing";
+  document.getElementById("originalText").textContent = data.s;
+  document.getElementById("answerText").textContent = data.answer;
+}
+
+function build() {
+  stopPlay();
+
+  let s = document.getElementById("inputStr").value.trim();
+  s = s.replace(/[^a-zA-Z0-9]/g, "");
+  if (s.length === 0) s = "aacecaaa";
+
+  document.getElementById("inputStr").value = s;
+
+  data = simulate(s);
+  current = 0;
+
+  draw();
+  render();
+}
+
+function nextStep() {
+  stopPlay();
+  if (current < data.steps.length - 1) {
+    current++;
+    render();
+  }
+}
+
+function prevStep() {
+  stopPlay();
+  if (current > 0) {
+    current--;
+    render();
+  }
+}
+
+function goEnd() {
+  stopPlay();
+  current = data.steps.length - 1;
+  render();
+}
+
+function togglePlay() {
+  if (timer) {
+    stopPlay();
+    return;
+  }
+
+  document.getElementById("playBtn").textContent = "Pause";
+
+  timer = setInterval(() => {
+    if (current >= data.steps.length - 1) {
+      stopPlay();
+    } else {
+      current++;
+      render();
+    }
+  }, 900);
+}
+
+function stopPlay() {
+  clearInterval(timer);
+  timer = null;
+  document.getElementById("playBtn").textContent = "Play";
+}
+
+build();
+</script>
+
+</body>
+</html>

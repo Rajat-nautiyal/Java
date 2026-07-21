@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LCS DP Animation</title>
+    <style>
+        /* --- Reset & Base --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 20px;
+        }
+
+        /* --- Top Controls Bar (Sticky) --- */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+
+        .top-bar .title {
+            font-weight: 600;
+            font-size: 18px;
+            color: #1e293b;
+        }
+        .top-bar .title span {
+            color: #2563eb;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls button:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .controls button:active {
+            transform: translateY(0px);
+        }
+
+        .controls button.primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+        }
+
+        .controls button.primary:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+
+        .controls button.primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .controls button.primary.playing {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .controls button.primary.playing:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+        }
+
+        .controls .speed-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 8px;
+            padding-left: 16px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .controls .speed-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .controls .speed-group input[type="range"] {
+            width: 100px;
+            accent-color: #2563eb;
+            cursor: pointer;
+        }
+
+        /* --- Input / Example Bar --- */
+        .input-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .input-bar .field {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .input-bar .field input {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            transition: border 0.2s;
+            width: 120px;
+        }
+
+        .input-bar .field input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .input-bar .presets {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-left: 8px;
+            padding-left: 16px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .input-bar .presets span {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+
+        .input-bar .presets button {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .input-bar .presets button:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+
+        .input-bar .presets button.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .input-bar .build-btn {
+            background: #2563eb;
+            border: none;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 4px;
+        }
+
+        .input-bar .build-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+        }
+
+        /* --- 3-Column Layout --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+
+        /* --- Common Panel Styles --- */
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+
+        /* --- LEFT: Code Panel --- */
+        .code-box {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            padding: 16px 18px;
+            border-radius: 16px;
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .code-box .line {
+            display: block;
+            padding: 4px 12px;
+            margin: 2px 0;
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+            color: #94a3b8;
+        }
+
+        .code-box .line.code-active {
+            background: #1e293b;
+            border-left-color: #22c55e;
+            color: #facc15;
+        }
+
+        /* --- CENTER: Visualization --- */
+        .vis-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .strings {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            padding: 8px 0;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 12px 16px;
+        }
+
+        .strings .string-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .strings .char {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            font-weight: 600;
+            font-size: 16px;
+            min-width: 32px;
+            text-align: center;
+            transition: all 0.25s ease;
+            color: #1e293b;
+        }
+
+        .strings .char.active {
+            background: #facc15;
+            color: #0f172a;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(250, 204, 21, 0.4);
+        }
+
+        .table-wrap {
+            overflow: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+        }
+
+        table#dpTable {
+            border-collapse: collapse;
+            background: white;
+            font-size: 15px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        table#dpTable th,
+        table#dpTable td {
+            width: 48px;
+            height: 48px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            font-weight: 500;
+            color: #1e293b;
+            transition: background 0.2s ease;
+        }
+
+        table#dpTable th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        table#dpTable .current {
+            background: #22c55e;
+            color: white;
+            font-weight: 700;
+            border-color: #16a34a;
+        }
+
+        table#dpTable .source {
+            background: #93c5fd;
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+
+        table#dpTable .path {
+            background: #f472b6;
+            color: white;
+            font-weight: 700;
+            border-color: #db2777;
+        }
+
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .result-box .label {
+            font-weight: 400;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .result-box .lcs-value {
+            color: #2563eb;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        /* --- RIGHT: Explanation Panel --- */
+        .explanation-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .explanation-box .step-message {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px 18px;
+            border-left: 4px solid #2563eb;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #1e293b;
+            flex: 1;
+        }
+
+        .explanation-box .step-message strong {
+            color: #0f172a;
+        }
+
+        .explanation-box .meta-info {
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 13px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 14px;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            .grid-container .panel:last-child {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            .grid-container .panel:last-child {
+                grid-column: span 1;
+            }
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .controls {
+                justify-content: center;
+            }
+            .controls .speed-group {
+                border-left: none;
+                padding-left: 0;
+            }
+            .strings {
+                gap: 20px;
+            }
+            .input-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .input-bar .presets {
+                border-left: none;
+                padding-left: 0;
+                margin-left: 0;
+                justify-content: center;
+            }
+            .input-bar .field {
+                justify-content: center;
+            }
+            .input-bar .build-btn {
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===================== TOP BAR (Sticky) ===================== -->
+    <div class="top-bar">
+        <div class="title">🧬 LCS <span>Animation</span></div>
+        <div class="controls">
+            <button onclick="prevStep()" id="prevBtn">◀ Prev</button>
+            <button onclick="togglePlay()" id="playBtn" class="primary">▶ Play</button>
+            <button onclick="nextStep()" id="nextBtn">Next ▶</button>
+
+            <div class="speed-group">
+                <label for="speedSlider">Speed</label>
+                <input type="range" id="speedSlider" min="200" max="2000" value="900" step="50" />
+                <span id="speedLabel">900ms</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== INPUT BAR ===================== -->
+    <div class="input-bar">
+        <div class="field">
+            <span>text1:</span>
+            <input type="text" id="inputText1" value="abcde" maxlength="8" />
+        </div>
+        <div class="field">
+            <span>text2:</span>
+            <input type="text" id="inputText2" value="ace" maxlength="8" />
+        </div>
+        <button class="build-btn" onclick="buildFromInput()">⟳ Build</button>
+
+        <div class="presets">
+            <span>Examples:</span>
+            <button data-t1="abcde" data-t2="ace" class="active">abcde / ace</button>
+            <button data-t1="abcd" data-t2="bdef">abcd / bdef</button>
+            <button data-t1="abcdef" data-t2="acdf">abcdef / acdf</button>
+            <button data-t1="abc" data-t2="abc">abc / abc</button>
+            <button data-t1="abcdgh" data-t2="aedfhr">abcdgh / aedfhr</button>
+        </div>
+    </div>
+
+    <!-- ===================== 3-COLUMN GRID ===================== -->
+    <div class="grid-container">
+
+        <!-- LEFT: Code -->
+        <div class="panel" style="padding:0; background:transparent; border:none; box-shadow:none;">
+            <div class="code-box">
+                <span class="line" id="line1">if characters match: dp[i][j] = 1 + dp[i-1][j-1]</span>
+                <span class="line" id="line2">else: dp[i][j] = max(dp[i-1][j], dp[i][j-1])</span>
+                <span class="line" id="line3">backtrack from bottom-right to build LCS</span>
+                <span class="line" id="line4">reverse the collected characters</span>
+            </div>
+        </div>
+
+        <!-- CENTER: Visualization -->
+        <div class="panel">
+            <div class="vis-container">
+
+                <!-- Strings -->
+                <div class="strings">
+                    <div class="string-group">
+                        <span style="color:#475569;">text1:</span>
+                        <span id="text1Chars"></span>
+                    </div>
+                    <div class="string-group">
+                        <span style="color:#475569;">text2:</span>
+                        <span id="text2Chars"></span>
+                    </div>
+                </div>
+
+                <!-- DP Table -->
+                <div class="table-wrap">
+                    <table id="dpTable"></table>
+                </div>
+
+                <!-- Result -->
+                <div class="result-box">
+                    <span class="label">📌 LCS so far:</span>
+                    <span class="lcs-value" id="result"></span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RIGHT: Explanation -->
+        <div class="panel">
+            <div class="explanation-box">
+                <h3>🔍 Step Details</h3>
+                <div class="step-message" id="info">
+                    Click <strong>Play</strong> or <strong>Next</strong> to start the LCS walkthrough.
+                </div>
+                <div class="meta-info">
+                    <span id="stepCounter">Step 0 / 0</span>
+                    <span id="phaseIndicator">Phase: -</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- JavaScript (LCS Logic + Rendering + Controls)                 -->
+    <!-- ============================================================ -->
+    <script>
+        // ------------------------------------------------------------
+        //  1. LCS Engine — builds steps from any two strings
+        // ------------------------------------------------------------
+
+        let currentText1 = "abcde";
+        let currentText2 = "ace";
+        let steps = [];
+        let currentStep = 0;
+        let playInterval = null;
+        let isPlaying = false;
+
+        function buildLCS(text1, text2) {
+            currentText1 = text1;
+            currentText2 = text2;
+            const n = text1.length;
+            const m = text2.length;
+
+            const dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+            const newSteps = [];
+
+            // --- Fill DP Table ---
+            for (let i = 1; i <= n; i++) {
+                for (let j = 1; j <= m; j++) {
+                    if (text1[i - 1] === text2[j - 1]) {
+                        dp[i][j] = 1 + dp[i - 1][j - 1];
+                        newSteps.push({
+                            phase: "fill",
+                            i,
+                            j,
+                            sources: [
+                                [i - 1, j - 1]
+                            ],
+                            message: `✅ Match: '${text1[i-1]}' == '${text2[j-1]}' → diagonal + 1`,
+                            codeLine: "line1",
+                            snapshot: dp.map(row => [...row]),
+                            result: []
+                        });
+                    } else {
+                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                        newSteps.push({
+                            phase: "fill",
+                            i,
+                            j,
+                            sources: [
+                                [i - 1, j],
+                                [i, j - 1]
+                            ],
+                            message: `❌ No match: take max(top: ${dp[i-1][j]}, left: ${dp[i][j-1]})`,
+                            codeLine: "line2",
+                            snapshot: dp.map(row => [...row]),
+                            result: []
+                        });
+                    }
+                }
+            }
+
+            // --- Backtracking ---
+            let i = n,
+                j = m;
+            const collected = [];
+            const path = [];
+
+            while (i > 0 && j > 0) {
+                path.push([i, j]);
+
+                if (text1[i - 1] === text2[j - 1]) {
+                    collected.push(text1[i - 1]);
+                    newSteps.push({
+                        phase: "backtrack",
+                        i,
+                        j,
+                        sources: [
+                            [i - 1, j - 1]
+                        ],
+                        path: [...path],
+                        message: `🔗 Match found: add '${text1[i-1]}' → move diagonally`,
+                        codeLine: "line3",
+                        snapshot: dp.map(row => [...row]),
+                        result: [...collected]
+                    });
+                    i--;
+                    j--;
+                } else if (dp[i - 1][j] > dp[i][j - 1]) {
+                    newSteps.push({
+                        phase: "backtrack",
+                        i,
+                        j,
+                        sources: [
+                            [i - 1, j]
+                        ],
+                        path: [...path],
+                        message: `⬆️ Top is bigger → move up`,
+                        codeLine: "line3",
+                        snapshot: dp.map(row => [...row]),
+                        result: [...collected]
+                    });
+                    i--;
+                } else {
+                    newSteps.push({
+                        phase: "backtrack",
+                        i,
+                        j,
+                        sources: [
+                            [i, j - 1]
+                        ],
+                        path: [...path],
+                        message: `⬅️ Left is bigger or equal → move left`,
+                        codeLine: "line3",
+                        snapshot: dp.map(row => [...row]),
+                        result: [...collected]
+                    });
+                    j--;
+                }
+            }
+
+            // --- Final Step ---
+            const finalLCS = [...collected].reverse();
+            newSteps.push({
+                phase: "done",
+                i: 0,
+                j: 0,
+                sources: [],
+                path: [...path],
+                message: `🎉 Reverse the collected characters to get the final LCS: "${finalLCS.join('')}"`,
+                codeLine: "line4",
+                snapshot: dp.map(row => [...row]),
+                result: finalLCS
+            });
+
+            return newSteps;
+        }
+
+        // ------------------------------------------------------------
+        //  2. Rendering Engine
+        // ------------------------------------------------------------
+
+        function render() {
+            if (!steps || steps.length === 0) return;
+            const step = steps[currentStep] || steps[0];
+            const total = steps.length;
+            const text1 = currentText1;
+            const text2 = currentText2;
+            const n = text1.length;
+            const m = text2.length;
+
+            // --- Strings ---
+            document.getElementById("text1Chars").innerHTML = text1
+                .split("")
+                .map((char, idx) => {
+                    const active = idx === step.i - 1 ? "active" : "";
+                    return `<span class="char ${active}">${char}</span>`;
+                })
+                .join("");
+
+            document.getElementById("text2Chars").innerHTML = text2
+                .split("")
+                .map((char, idx) => {
+                    const active = idx === step.j - 1 ? "active" : "";
+                    return `<span class="char ${active}">${char}</span>`;
+                })
+                .join("");
+
+            // --- DP Table ---
+            const table = document.getElementById("dpTable");
+            let html = "<tr><th></th><th>-</th>";
+            for (const char of text2) html += `<th>${char}</th>`;
+            html += "</tr>";
+
+            for (let row = 0; row <= n; row++) {
+                html += `<tr><th>${row === 0 ? "-" : text1[row - 1]}</th>`;
+                for (let col = 0; col <= m; col++) {
+                    let className = "";
+                    if (row === step.i && col === step.j) className = "current";
+                    else if (step.sources && step.sources.some(([r, c]) => r === row && c === col)) className = "source";
+                    else if (step.path && step.path.some(([r, c]) => r === row && c === col)) className = "path";
+                    html += `<td class="${className}">${step.snapshot[row][col]}</td>`;
+                }
+                html += "</tr>";
+            }
+            table.innerHTML = html;
+
+            // --- Code Highlight ---
+            ["line1", "line2", "line3", "line4"].forEach(id => {
+                document.getElementById(id).className = "line";
+            });
+            if (step.codeLine) {
+                document.getElementById(step.codeLine).className = "line code-active";
+            }
+
+            // --- Result ---
+            const resultText = step.result.length === 0 ? "—" : step.result.join("");
+            document.getElementById("result").textContent = resultText;
+
+            // --- Explanation ---
+            document.getElementById("info").innerHTML = step.message || "Ready.";
+
+            // --- Meta Info ---
+            document.getElementById("stepCounter").textContent = `Step ${currentStep + 1} / ${total}`;
+            const phaseMap = {
+                fill: "🛠️ Filling DP",
+                backtrack: "🔍 Backtracking",
+                done: "✅ Complete"
+            };
+            document.getElementById("phaseIndicator").textContent = `Phase: ${phaseMap[step.phase] || step.phase}`;
+
+            // --- Buttons ---
+            document.getElementById("prevBtn").disabled = (currentStep === 0);
+            document.getElementById("nextBtn").disabled = (currentStep === total - 1);
+        }
+
+        // ------------------------------------------------------------
+        //  3. Controls — Play/Pause Toggle
+        // ------------------------------------------------------------
+
+        function nextStep() {
+            if (!steps || steps.length === 0) return;
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                render();
+            } else {
+                // If at end, stop playing if active
+                if (isPlaying) togglePlay();
+            }
+        }
+
+        function prevStep() {
+            if (!steps || steps.length === 0) return;
+            if (isPlaying) togglePlay();
+            if (currentStep > 0) {
+                currentStep--;
+                render();
+            }
+        }
+
+        function togglePlay() {
+            const btn = document.getElementById("playBtn");
+
+            if (isPlaying) {
+                // Pause
+                if (playInterval) {
+                    clearInterval(playInterval);
+                    playInterval = null;
+                }
+                isPlaying = false;
+                btn.textContent = "▶ Play";
+                btn.classList.remove("playing");
+            } else {
+                // Play
+                if (!steps || steps.length === 0) return;
+
+                // If at the end, restart
+                if (currentStep >= steps.length - 1) {
+                    currentStep = 0;
+                    render();
+                }
+
+                isPlaying = true;
+                btn.textContent = "⏸ Pause";
+                btn.classList.add("playing");
+
+                const speed = parseInt(document.getElementById("speedSlider").value);
+                document.getElementById("speedLabel").textContent = speed + "ms";
+
+                playInterval = setInterval(() => {
+                    if (currentStep >= steps.length - 1) {
+                        // Reached the end — stop playing
+                        togglePlay();
+                        return;
+                    }
+                    nextStep();
+                }, speed);
+            }
+        }
+
+        function resetAnimation() {
+            if (isPlaying) togglePlay();
+            currentStep = 0;
+            render();
+        }
+
+        // --- Build from input ---
+        function buildFromInput() {
+            if (isPlaying) togglePlay();
+            const t1 = document.getElementById("inputText1").value.trim() || "abcde";
+            const t2 = document.getElementById("inputText2").value.trim() || "ace";
+            const maxLen = 10;
+            const s1 = t1.slice(0, maxLen);
+            const s2 = t2.slice(0, maxLen);
+            document.getElementById("inputText1").value = s1;
+            document.getElementById("inputText2").value = s2;
+
+            steps = buildLCS(s1, s2);
+            currentStep = 0;
+            render();
+
+            document.querySelectorAll(".presets button").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.t1 === s1 && btn.dataset.t2 === s2);
+            });
+        }
+
+        // --- Load preset ---
+        function loadPreset(t1, t2) {
+            document.getElementById("inputText1").value = t1;
+            document.getElementById("inputText2").value = t2;
+            buildFromInput();
+        }
+
+        // --- Speed slider ---
+        document.getElementById("speedSlider").addEventListener("input", function() {
+            document.getElementById("speedLabel").textContent = this.value + "ms";
+            if (isPlaying) {
+                // Restart with new speed
+                togglePlay();
+                togglePlay();
+            }
+        });
+
+        // --- Preset buttons ---
+        document.querySelectorAll(".presets button").forEach(btn => {
+            btn.addEventListener("click", function() {
+                loadPreset(this.dataset.t1, this.dataset.t2);
+            });
+        });
+
+        // --- Keyboard shortcuts ---
+        document.addEventListener("keydown", (e) => {
+            if (e.target.tagName === "INPUT") return;
+            if (e.key === "ArrowRight") { e.preventDefault();
+                nextStep(); }
+            if (e.key === "ArrowLeft") { e.preventDefault();
+                prevStep(); }
+            if (e.key === " ") { e.preventDefault();
+                togglePlay(); }
+            if (e.key === "r" || e.key === "R") { resetAnimation(); }
+        });
+
+        // ------------------------------------------------------------
+        //  4. Initial Build
+        // ------------------------------------------------------------
+
+        steps = buildLCS("abcde", "ace");
+        currentStep = 0;
+        render();
+        console.log("🧬 LCS Animation ready! Use arrow keys or buttons to navigate.");
+        console.log("💡 Try the preset examples or build your own!");
+    </script>
+
+</body>
+</html>
