@@ -519,6 +519,7 @@
             <button onclick="prevStep()" id="prevBtn">◀ Prev</button>
             <button onclick="togglePlay()" id="playBtn" class="primary">▶ Play</button>
             <button onclick="nextStep()" id="nextBtn">Next ▶</button>
+            <button onclick="lastStep()" id="lastBtn">▶▶</button>
 
             <div class="speed-group">
                 <label for="speedSlider">Speed</label>
@@ -532,11 +533,11 @@
     <div class="input-bar">
         <div class="field">
             <span>text1:</span>
-            <input type="text" id="inputText1" value="abcde" maxlength="8" />
+            <input type="text" id="inputText1" value="abcde" maxlength="10" />
         </div>
         <div class="field">
             <span>text2:</span>
-            <input type="text" id="inputText2" value="ace" maxlength="8" />
+            <input type="text" id="inputText2" value="ace" maxlength="10" />
         </div>
         <button class="build-btn" onclick="buildFromInput()">⟳ Build</button>
 
@@ -821,6 +822,7 @@
             // --- Buttons ---
             document.getElementById("prevBtn").disabled = (currentStep === 0);
             document.getElementById("nextBtn").disabled = (currentStep === total - 1);
+            document.getElementById("lastBtn").disabled = (currentStep === total - 1);
         }
 
         // ------------------------------------------------------------
@@ -837,7 +839,16 @@
                 if (isPlaying) togglePlay();
             }
         }
-
+        function lastStep() {
+            if (!steps || steps.length === 0) return;
+            if (currentStep < steps.length - 1) {
+                currentStep = steps.length - 1;
+                render();
+            } else {
+                // If at end, stop playing if active
+                if (isPlaying) togglePlay();
+            }
+        }
         function prevStep() {
             if (!steps || steps.length === 0) return;
             if (isPlaying) togglePlay();

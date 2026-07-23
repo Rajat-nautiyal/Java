@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Distance — Match / Replace / Delete / Insert Recursion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#F4EEDF;
+    --paper:#FFFDF7;
+    --ink:#2A2015;
+    --ink-soft:#6b5f4d;
+    --ledger:#D8CBAE;
+    --ledger-strong:#c2b394;
+    --blue-milk:#3E6E8E;
+    --blue-milk-soft:#dbe8ef;
+    --gold-coin:#B98527;
+    --gold-coin-soft:#f3e3c2;
+    --take-green:#4F8A5B;
+    --take-green-soft:#e0eee2;
+    --skip-slate:#867A63;
+    --skip-slate-soft:#eae5d8;
+    --stamp-final:#8C3B3B;
+    --stamp-final-soft:#f0dcd6;
+    --char-purple:#7A4FA3;
+    --char-purple-soft:#ece3f5;
+    --delete-crimson:#B23B3B;
+    --delete-crimson-soft:#f5e0df;
+    --insert-teal:#1F8A8A;
+    --insert-teal-soft:#dcf0ef;
+    --shadow: 0 2px 0 rgba(42,32,21,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    background-image:
+      linear-gradient(var(--ledger) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ledger) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 20px 60px;
+  }
+  .wrap{max-width:1280px;margin:0 auto;}
+
+  header{margin-bottom:18px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--blue-milk);font-weight:600;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--blue-milk);display:inline-block;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,4vw,38px);margin:8px 0 10px;letter-spacing:-0.01em;}
+  h1 em{font-style:italic;color:var(--gold-coin);font-weight:500;}
+  .sub{max-width:820px;color:var(--ink-soft);font-size:15px;line-height:1.55;}
+  .sub code{background:var(--gold-coin-soft);padding:1px 5px;border-radius:4px;}
+
+  .card{background:var(--paper);border:1px solid var(--ledger-strong);border-radius:10px;box-shadow:var(--shadow);}
+
+  .build-bar{
+    margin:0 0 16px;padding:14px 18px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;
+  }
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);
+  }
+  .field input[type=text]{
+    font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--ink);
+    border:1px solid var(--ledger-strong);border-radius:7px;padding:8px 10px;width:150px;background:var(--paper);
+    letter-spacing:0.04em;
+  }
+  .field input[type=text].s1{border-color:var(--char-purple);}
+  .field input[type=text].s2{border-color:var(--blue-milk);}
+  .field input[type=text]:focus{outline:2px solid var(--gold-coin);outline-offset:1px;}
+  .build-err{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--delete-crimson);display:none;align-self:center;
+  }
+  .build-err.show{display:block;}
+  .hint{font-size:11.5px;color:var(--ink-soft);align-self:center;font-family:'JetBrains Mono',monospace;}
+
+  .controls{
+    position:sticky;top:12px;z-index:30;margin:0 0 16px;padding:12px 18px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--paper);box-shadow:0 4px 14px rgba(42,32,21,0.12);
+  }
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;
+    border:1px solid var(--ledger-strong);background:var(--paper);color:var(--ink);
+    padding:9px 14px;border-radius:7px;cursor:pointer;
+    transition:background .15s ease, transform .1s ease, color .15s ease, border-color .15s ease;
+  }
+  .btn:hover{border-color:var(--blue-milk);color:var(--blue-milk);}
+  .btn:active{transform:translateY(1px);}
+  .btn:focus-visible{outline:2px solid var(--blue-milk);outline-offset:2px;}
+  .btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .btn.primary:hover{background:var(--blue-milk);border-color:var(--blue-milk);color:#fff;}
+  .btn.gold{background:var(--gold-coin);color:#fff;border-color:var(--gold-coin);}
+  .btn.gold:hover{background:#a3760f;border-color:#a3760f;color:#fff;}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn:disabled:hover{border-color:var(--ledger-strong);color:var(--ink);}
+  .speed-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;}
+  input[type=range]{accent-color:var(--blue-milk);}
+  .progress{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+
+  main{display:grid;grid-template-columns: 1fr 340px;gap:16px;align-items:start;}
+  @media(max-width:980px){ main{grid-template-columns:1fr;} }
+
+  .diagram-card{padding:18px;}
+  .diagram-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;}
+  .diagram-head-row h2{font-family:'Fraunces',serif;font-weight:600;font-size:18px;margin:0;}
+  .phase-pill{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;
+    padding:5px 12px;border-radius:20px;background:var(--blue-milk-soft);color:var(--blue-milk);
+    transition:background .3s ease, color .3s ease;
+  }
+  .phase-pill.tree{background:var(--gold-coin-soft);color:var(--gold-coin);}
+  .phase-pill.memo{background:var(--take-green-soft);color:var(--take-green);}
+  .phase-pill.result{background:var(--char-purple-soft);color:var(--char-purple);}
+
+  .strings-row{display:flex;gap:28px;margin-bottom:14px;flex-wrap:wrap;}
+  .string-block .strip-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;
+    color:var(--ink-soft);margin-bottom:6px;
+  }
+  .string-strip{display:flex;}
+  .schar{
+    width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;
+    border:1px solid var(--ledger);background:var(--paper);color:var(--ink-soft);
+    margin-right:2px;border-radius:5px;transition:background .25s ease,color .2s ease,border-color .2s ease;
+  }
+  .schar.hi{background:var(--gold-coin-soft);border-color:var(--gold-coin);color:var(--ink);}
+  .schar.hi-t{background:var(--blue-milk-soft);border-color:var(--blue-milk);color:var(--ink);}
+
+  .diagram-scroll{overflow:auto;max-height:480px;border:1px solid var(--ledger);border-radius:8px;padding:10px;background:var(--paper);}
+  svg#diagramSvg{display:block; overflow:visible;}
+
+  .node-circle{stroke-width:2px;transition:fill .3s ease, stroke .3s ease;fill:var(--paper);stroke:var(--ledger-strong);}
+  .node-circle.active{stroke:var(--ink);stroke-dasharray:5 3;animation:dashspin 1s linear infinite;}
+  @keyframes dashspin{to{stroke-dashoffset:-16;}}
+  .node-circle.base-i{fill:var(--gold-coin-soft);stroke:var(--gold-coin);}
+  .node-circle.base-j{fill:var(--delete-crimson-soft);stroke:var(--delete-crimson);}
+  .node-circle.memo-hit{fill:var(--blue-milk-soft);stroke:var(--blue-milk);}
+  .node-circle.match{fill:var(--take-green-soft);stroke:var(--take-green);}
+  .node-circle.min3{fill:var(--char-purple-soft);stroke:var(--char-purple);}
+  .node-text{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;text-anchor:middle;fill:var(--ink-soft);}
+  .node-char{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:800;text-anchor:middle;}
+  .node-result{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;text-anchor:middle;fill:var(--ink);dominant-baseline:hanging;}
+
+  .edge{stroke-width:2px;fill:none;opacity:0.3;transition:opacity .25s ease, stroke-width .25s ease;}
+  .edge.match{stroke:var(--take-green);}
+  .edge.replace{stroke:var(--char-purple);}
+  .edge.delete{stroke:var(--delete-crimson);}
+  .edge.insert{stroke:var(--insert-teal);}
+  .edge.hot{opacity:1;stroke-width:3.2px;}
+  .edge-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;}
+  .edge-label.match{fill:var(--take-green);}
+  .edge-label.replace{fill:var(--char-purple);}
+  .edge-label.delete{fill:var(--delete-crimson);}
+  .edge-label.insert{fill:var(--insert-teal);}
+
+  .memo-table-wrap{margin-top:14px;}
+  .memo-table-wrap .memo-scroll{overflow:auto;max-width:100%;}
+  table.memo{border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:11px;}
+  table.memo th, table.memo td{
+    width:32px;height:28px;text-align:center;border:1px solid var(--ledger);transition:background .3s ease,color .2s ease;
+  }
+  table.memo th{background:var(--skip-slate-soft);color:var(--skip-slate);font-size:10px;}
+  table.memo td{background:var(--paper);color:var(--ledger-strong);}
+  table.memo td.filled{background:var(--take-green-soft);color:var(--take-green);border-color:var(--take-green);font-weight:700;}
+  table.memo td.base-cell{background:var(--gold-coin-soft);color:var(--gold-coin);border-color:var(--gold-coin);font-weight:700;}
+
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:12px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .swatch.line{border-radius:2px;height:3px;width:16px;}
+
+  aside{display:flex;flex-direction:column;gap:16px;}
+  .algo-card{padding:16px 0;}
+  .algo-card .label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-soft);padding:0 16px 10px;border-bottom:1px solid var(--ledger);margin-bottom:4px;
+  }
+  .algo-list{margin:0;padding:10px 16px 12px;font-size:13px;line-height:1.5;}
+  .algo-item{
+    padding:6px 8px;border-radius:6px;border-left:3px solid transparent;
+    transition:background .25s ease, border-color .2s ease, color .2s ease;color:var(--ink-soft);
+  }
+  .algo-item.heading{font-weight:700;color:var(--ink);margin-top:6px;}
+  .algo-item.sub{margin-left:14px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .algo-item.active{background:var(--gold-coin-soft);border-left-color:var(--gold-coin);color:var(--ink);font-weight:600;}
+
+  .info-card{padding:16px;}
+  .info-card .label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-soft);margin-bottom:8px;
+  }
+  .info-text{font-size:14px;line-height:1.55;min-height:110px;}
+  .info-text b{color:var(--blue-milk);}
+  .answer-banner{
+    display:none;margin-top:10px;padding:10px 12px;border-radius:8px;
+    background:var(--char-purple);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;line-height:1.5;
+  }
+  .answer-banner.show{display:block;}
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="padding: 0%;">
+    <h2 style="font-family:'Fraunces',serif;font-weight:600;font-size:22px;margin:8px 0 10px;">LC 72:- Edit Distance — <em style="font-style:italic;color:var(--gold-coin);">pick the cheapest</em> Memo Approach</h2>
+    <div class="sub">f(i, j) returns the minimum number of (insert/delete/replace) operations needed to turn S1[0..i] into S2[0..j]</div>
+    <img src="../../Images/WhatsApp Image 2026-07-23 at 6.25.04 PM.jpeg" height="300px"/>
+  </header>
+
+  <div class="card build-bar">
+    <div class="field">
+      <label for="s1Input" style="color:var(--char-purple);">S1 (max 9 chars)</label>
+      <input type="text" id="s1Input" class="s1" maxlength="9" value="horse">
+    </div>
+    <div class="field">
+      <label for="s2Input" style="color:var(--blue-milk);">S2 (max 9 chars)</label>
+      <input type="text" id="s2Input" class="s2" maxlength="9" value="ros">
+    </div>
+    <button class="btn gold" id="buildBtn">⚙ Build example</button>
+    <span class="hint">1–9 characters each</span>
+    <span class="build-err" id="buildErr">Both strings must be 1–9 characters long.</span>
+  </div>
+
+  <div class="card controls">
+    <button class="btn" id="resetBtn">⟲ Reset</button>
+    <button class="btn" id="stepBackBtn">◀ Step</button>
+    <button class="btn primary" id="playBtn">▶</button>
+    <button class="btn" id="stepFwdBtn">Step ▶</button>
+    <button class="btn" id="stepToLast">▶▶</button>
+    <div class="speed-wrap">
+      Speed
+      <input type="range" id="speedSlider" min="150" max="1000" value="480" step="20">
+    </div>
+    <div class="speed-wrap">
+      Zoom
+      <input type="range" id="zoomSlider" min="25" max="150" value="100" step="5">
+      <span id="zoomLabel">100%</span>
+    </div>
+    <button class="btn" id="fitBtn">⤢ Fit width</button>
+    <div class="progress" id="progressText">Step 0 / 0</div>
+  </div>
+
+  <main>
+    <div class="card diagram-card">
+      <div class="diagram-head-row" style = "">
+        <div style="display: flex; align-items: center; column-gap: 15px;"><h2>f(i, j)</h2> <span style="font-size: small;">i = S1.len-1, j = S2.len-1</span></div>
+        <span class="phase-pill" id="phasePill">Tree</span>
+      </div>
+
+      <div class="strings-row">
+        <div class="string-block">
+          <div class="strip-label" style="color: purple;">S1</div>
+          <div class="string-strip" id="sStrip"></div>
+        </div>
+        <div class="string-block">
+          <div class="strip-label" style="color: blue;">S2</div>
+          <div class="string-strip" id="tStrip"></div>
+        </div>
+      </div>
+
+      <div class="diagram-scroll">
+        <svg id="diagramSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+
+      <div class="memo-table-wrap" id="memoWrap" style="display:none;">
+        <div class="strip-label" style="margin-bottom:8px;">Memo table: dp[i][j] (rows/cols start at -1)</div>
+        <div class="memo-scroll">
+          <table class="memo" id="memoTable"></table>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--char-purple);"></i>S1[i] char (purple)</span>
+        <span><i class="swatch" style="background:var(--blue-milk);"></i>S2[j] char (blue)</span>
+        <span><i class="swatch line" style="background:var(--take-green);"></i>match edge: f(i-1, j-1)</span>
+        <span><i class="swatch line" style="background:var(--char-purple);"></i>replace edge: 1 + f(i-1, j-1)</span>
+        <span><i class="swatch line" style="background:var(--delete-crimson);"></i>delete edge: 1 + f(i-1, j)</span>
+        <span><i class="swatch line" style="background:var(--insert-teal);"></i>insert edge: 1 + f(i, j-1)</span>
+        <span><i class="swatch" style="background:var(--gold-coin-soft);"></i>base i&lt;0 → j+1</span>
+        <span><i class="swatch" style="background:var(--delete-crimson-soft);"></i>base j&lt;0 → i+1</span>
+        <span><i class="swatch" style="background:var(--blue-milk-soft);"></i>memo cache hit</span>
+        <span><i class="swatch" style="background:var(--paper);border:2px dashed var(--ink);"></i>active call</span>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card algo-card">
+        <div class="label">Algorithm</div>
+        <div class="algo-list" id="algoList"></div>
+      </div>
+      <div class="card info-card">
+        <div class="label">What's happening</div>
+        <div class="info-text" id="infoText">Press play to walk through the algorithm.</div>
+        <div class="answer-banner" id="answerBanner"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+// ---------- plain-English algorithm panel ----------
+const ALGO_LINES = [
+  {id:'base-heading', text:'Base cases:', cls:'heading'},
+  {id:'base-i', text:'If i < 0, return j + 1 (insert all remaining characters of S2).', cls:'sub'},
+  {id:'base-j', text:'If j < 0, return i + 1 (delete all remaining characters of S1).', cls:'sub'},
+  {id:'match-heading', text:'1. If S1[i] == S2[j]:', cls:'heading'},
+  {id:'match-op', text:'No operation needed: f(i-1, j-1)', cls:'sub'},
+  {id:'else-heading', text:'2. Otherwise, try all three operations:', cls:'heading'},
+  {id:'replace-op', text:'Replace: 1 + f(i-1, j-1)', cls:'sub'},
+  {id:'delete-op', text:'Delete: 1 + f(i-1, j)', cls:'sub'},
+  {id:'insert-op', text:'Insert: 1 + f(i, j-1)', cls:'sub'},
+  {id:'min-return', text:'3. Take the minimum of the three.', cls:'heading'},
+  {id:'return', text:'4. Return f(n-1, m-1) as the final answer.', cls:'heading'},
+];
+
+const algoList = document.getElementById('algoList');
+ALGO_LINES.forEach(l=>{
+  const div = document.createElement('div');
+  div.className = 'algo-item ' + l.cls;
+  div.id = 'algo-' + l.id;
+  div.textContent = l.text;
+  algoList.appendChild(div);
+});
+function highlightAlgo(ids){
+  document.querySelectorAll('.algo-item').forEach(el=>el.classList.remove('active'));
+  (ids||[]).forEach(id=>{
+    const el = document.getElementById('algo-'+id);
+    if(el) el.classList.add('active');
+  });
+}
+
+const EDGE_LABEL = {match:'match', replace:'rep', delete:'del', insert:'ins'};
+const EDGE_WORD = {match:'match', replace:'replace', delete:'delete', insert:'insert'};
+const EDGE_RANK = {match:0, replace:0, delete:1, insert:2};
+
+// ---------- build trace ----------
+function buildSteps(s, t){
+  const steps = [];
+  const push = st => steps.push(st);
+  const memo = {};
+  const nodeMap = {};
+  let nodeId = 0;
+
+  function helper(i, j, depth, parentId, edgeKind){
+    const id = nodeId++;
+    nodeMap[id] = {id, i, j, depth, parentId, edgeKind, type:'call', result:null};
+    push({type:'enter', id, i, j, algo:null, info:`f(i=${i}, j=${j}) is called${edgeKind ? ` — this is the <b>${EDGE_WORD[edgeKind]}</b> branch of its parent.` : ' — this is the root call.'}`});
+
+    if(i<0){
+      nodeMap[id].type='base-i'; nodeMap[id].result=j+1;
+      push({type:'resolve', id, val:j+1, algo:['base-i'], info:`i &lt; 0 → S1 is exhausted; insert the remaining <b>${j+1}</b> character(s) of S2. Return <b>${j+1}</b>.`});
+      return j+1;
+    }
+    if(j<0){
+      nodeMap[id].type='base-j'; nodeMap[id].result=i+1;
+      push({type:'resolve', id, val:i+1, algo:['base-j'], info:`j &lt; 0 → S2 is exhausted; delete the remaining <b>${i+1}</b> character(s) of S1. Return <b>${i+1}</b>.`});
+      return i+1;
+    }
+    const key = i+','+j;
+    if(memo[key]!==undefined){
+      nodeMap[id].type='memo-hit'; nodeMap[id].result=memo[key];
+      push({type:'resolve', id, val:memo[key], algo:null, info:`dp[${i}][${j}] was already computed → return the cached value <b>${memo[key]}</b> instantly.`});
+      return memo[key];
+    }
+
+    const c1 = s[i], c2 = t[j];
+    if(c1===c2){
+      push({type:'branch', id, algo:['match-heading'], info:`S1[${i}]='${c1}' == S2[${j}]='${c2}' → no edit needed here, only one branch.`});
+      push({type:'go-match', id, algo:['match-op'], info:`Take the <b>match</b> branch: f(${i-1}, ${j-1}) — move both pointers back, no cost added.`});
+      const val = helper(i-1, j-1, depth+1, id, 'match');
+      memo[key] = val;
+      nodeMap[id].type='match'; nodeMap[id].result=val;
+      push({type:'resolve', id, val, algo:['match-op'], info:`Characters matched, so dp[${i}][${j}] = f(${i-1}, ${j-1}) = <b>${val}</b>.`});
+      return val;
+    } else {
+      push({type:'branch', id, algo:['else-heading'], info:`S1[${i}]='${c1}' != S2[${j}]='${c2}' → explore all three operations.`});
+      push({type:'go-replace', id, algo:['replace-op'], info:`<b>Replace</b> branch: 1 + f(${i-1}, ${j-1}) — swap S1[${i}] for S2[${j}], then match the rest.`});
+      const rep = helper(i-1, j-1, depth+1, id, 'replace');
+      push({type:'go-delete', id, algo:['delete-op'], info:`Back at f(${i},${j}). <b>Delete</b> branch: 1 + f(${i-1}, ${j}) — drop S1[${i}].`});
+      const del = helper(i-1, j, depth+1, id, 'delete');
+      push({type:'go-insert', id, algo:['insert-op'], info:`Back at f(${i},${j}). <b>Insert</b> branch: 1 + f(${i}, ${j-1}) — insert S2[${j}] in front.`});
+      const ins = helper(i, j-1, depth+1, id, 'insert');
+      const total = 1 + Math.min(rep, del, ins);
+      memo[key] = total;
+      nodeMap[id].type='min3'; nodeMap[id].result=total;
+      push({type:'resolve', id, val:total, algo:['min-return'], info:`All three branches are back: replace=${rep}, delete=${del}, insert=${ins} → dp[${i}][${j}] = 1 + min(...) = <b>${total}</b>.`});
+      return total;
+    }
+  }
+
+  push({type:'start', id:null, algo:['return'], info:`editDistance("${s}", "${t}") calls f(${s.length-1}, ${t.length-1}) — this is the root of the tree.`});
+  const result = helper(s.length-1, t.length-1, 0, null, null);
+  push({type:'final', id:null, algo:['return'], info:`<b>editDistance("${s}", "${t}") = ${result}</b>`});
+
+  return {steps, s, t, result, nodeMap};
+}
+
+// ---------- SVG tree layout ----------
+const NODE_R = 18;
+const SPACING_X = 52;
+const SPACING_Y = 70;
+const SVG_MARGIN = 32;
+
+function assignXPositions(built){
+  const nodes = built.nodeMap;
+  const childrenOf = {};
+  Object.values(nodes).forEach(nd=>{
+    if(nd.parentId!==null){
+      childrenOf[nd.parentId] = childrenOf[nd.parentId] || [];
+      childrenOf[nd.parentId].push(nd);
+    }
+  });
+  let cursor = 0;
+  function assign(id){
+    const nd = nodes[id];
+    const kids = (childrenOf[id]||[]).slice().sort((a,b)=> EDGE_RANK[a.edgeKind] - EDGE_RANK[b.edgeKind]);
+    if(kids.length===0){
+      nd._x = cursor;
+      cursor += 1;
+    } else {
+      kids.forEach(k=> assign(k.id));
+      const xs = kids.map(k=>k._x);
+      nd._x = (Math.min(...xs) + Math.max(...xs)) / 2;
+    }
+  }
+  assign(0);
+}
+
+function buildTreeSVG(built){
+  assignXPositions(built);
+  const svg = document.getElementById('diagramSvg');
+  svg.innerHTML = '';
+  let maxX=0, maxY=0;
+  Object.values(built.nodeMap).forEach(nd=>{
+    maxX = Math.max(maxX, nd._x);
+    maxY = Math.max(maxY, nd.depth);
+  });
+  const width = SVG_MARGIN*2 + maxX*SPACING_X + NODE_R*2;
+  const height = SVG_MARGIN*2 + maxY*SPACING_Y + NODE_R*2 + 22;
+  built._naturalWidth = width;
+  built._naturalHeight = height;
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+  const edgeLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  svg.appendChild(edgeLayer);
+  const nodeLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  svg.appendChild(nodeLayer);
+
+  function posOf(nd){
+    return { x: SVG_MARGIN + NODE_R + nd._x*SPACING_X, y: SVG_MARGIN + NODE_R + nd.depth*SPACING_Y };
+  }
+  built._pos = {};
+  Object.values(built.nodeMap).forEach(nd=>{ built._pos[nd.id] = posOf(nd); });
+
+  Object.values(built.nodeMap).forEach(nd=>{
+    if(nd.parentId!==null){
+      const parent = built.nodeMap[nd.parentId];
+      const p1 = built._pos[parent.id], p2 = built._pos[nd.id];
+      const midY = (p1.y+p2.y)/2;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M ${p1.x} ${p1.y+NODE_R} C ${p1.x} ${midY}, ${p2.x} ${midY}, ${p2.x} ${p2.y-NODE_R}`);
+      path.setAttribute('class', 'edge ' + nd.edgeKind);
+      path.dataset.id = nd.id;
+      edgeLayer.appendChild(path);
+
+      const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+      const dx = nd.edgeKind==='replace' ? -18 : (nd.edgeKind==='insert' ? 18 : (nd.edgeKind==='delete' ? 0 : 0));
+      label.setAttribute('x', (p1.x+p2.x)/2 + dx);
+      label.setAttribute('y', midY - 3);
+      label.setAttribute('class', 'edge-label ' + nd.edgeKind);
+      label.setAttribute('text-anchor','middle');
+      label.textContent = EDGE_LABEL[nd.edgeKind];
+      edgeLayer.appendChild(label);
+    }
+  });
+
+  Object.values(built.nodeMap).forEach(nd => {
+    const p = built._pos[nd.id];
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.dataset.id = nd.id;
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', p.x);
+    circle.setAttribute('cy', p.y);
+    circle.setAttribute('r', NODE_R);
+    circle.setAttribute('class', 'node-circle');
+    g.appendChild(circle);
+
+    const hasChars = nd.i >= 0 && nd.j >= 0;
+
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', p.x);
+    text.setAttribute('y', p.y - 6);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('class', 'node-text');
+    text.setAttribute('font-size', '7.5');
+    text.textContent = `i=${nd.i},j=${nd.j}`;
+    g.appendChild(text);
+
+    if (hasChars) {
+        const c1 = built.s[nd.i];
+        const c2 = built.t[nd.j];
+        const charText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        charText.setAttribute('x', p.x);
+        charText.setAttribute('y', p.y + 8);
+        charText.setAttribute('text-anchor', 'middle');
+        charText.setAttribute('class', 'node-char');
+        charText.setAttribute('font-size', '11');
+        charText.setAttribute('font-weight', 'bold');
+
+        const tspanS = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanS.textContent = c1;
+        tspanS.style.fill = "purple";
+
+        const tspanSep = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanSep.textContent = '·';
+        tspanSep.style.fill = "#999";
+
+        const tspanT = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanT.textContent = c2;
+        tspanT.style.fill = "blue";
+
+        charText.appendChild(tspanS);
+        charText.appendChild(tspanSep);
+        charText.appendChild(tspanT);
+        g.appendChild(charText);
+    }
+
+    nodeLayer.appendChild(g);
+  });
+}
+
+// ---------- replay ----------
+function computeStateAt(built, idx){
+  const enteredIds = new Set();
+  const resolvedVal = {};
+  const activeStack = [];
+  let phase = 'tree';
+  let hiI = null, hiJ = null;
+
+  for(let k=0;k<=idx;k++){
+    const ev = built.steps[k];
+    if(!ev) continue;
+    if(ev.type==='enter'){
+      enteredIds.add(ev.id);
+      activeStack.push(ev.id);
+      hiI = ev.i; hiJ = ev.j;
+    }
+    if(ev.type==='resolve'){
+      resolvedVal[ev.id] = ev.val;
+      const pos = activeStack.lastIndexOf(ev.id);
+      if(pos!==-1) activeStack.splice(pos,1);
+    }
+    if(ev.type!=='enter' && ev.id!==null && ev.id!==undefined){
+      const nd = built.nodeMap[ev.id];
+      if(nd && nd.i>=0 && nd.j>=0){ hiI = nd.i; hiJ = nd.j; }
+    }
+    if(ev.type==='go-match' || ev.type==='go-replace' || ev.type==='go-delete' || ev.type==='go-insert') phase = 'memo';
+    if(ev.type==='final') phase = 'result';
+  }
+  return { enteredIds, resolvedVal, activeStack, phase, hiI, hiJ };
+}
+
+// ---------- state / controls ----------
+let built, stepIndex, playing=false, timer=null;
+
+function sanitize(str){
+  return str.replace(/\s+/g,'');
+}
+
+function init(s, t){
+  built = buildSteps(s, t);
+  stepIndex = 0;
+  playing = false;
+  clearInterval(timer);
+  updatePlayBtn();
+  buildStringStrips();
+  buildTreeSVG(built);
+  buildMemoTableDOM();
+  render();
+  fitZoom();
+}
+
+function applyZoom(pct){
+  if(!built) return;
+  const svg = document.getElementById('diagramSvg');
+  svg.setAttribute('width', built._naturalWidth * pct/100);
+  svg.setAttribute('height', built._naturalHeight * pct/100);
+  document.getElementById('zoomSlider').value = pct;
+  document.getElementById('zoomLabel').textContent = Math.round(pct) + '%';
+}
+
+function fitZoom(){
+  if(!built) return;
+  const box = document.querySelector('.diagram-scroll');
+  const containerWidth = box.clientWidth - 24;
+  let pct = Math.floor((containerWidth / built._naturalWidth) * 100);
+  pct = Math.max(25, Math.min(100, pct));
+  applyZoom(pct);
+}
+
+function buildStringStrips(){
+  const sStrip = document.getElementById('sStrip');
+  const tStrip = document.getElementById('tStrip');
+  sStrip.innerHTML=''; tStrip.innerHTML='';
+  built.s.split('').forEach(ch=>{
+    const d = document.createElement('div');
+    d.className='schar';
+    d.textContent=ch;
+    d.style.color = 'purple';
+    sStrip.appendChild(d);
+  });
+  built.t.split('').forEach(ch=>{
+    const d = document.createElement('div');
+    d.className='schar';
+    d.textContent=ch;
+    d.style.color = 'blue';
+    tStrip.appendChild(d);
+  });
+}
+
+// Table rows/cols are offset by +1 so index -1 maps to array position 0.
+function buildMemoTableDOM(){
+  const table = document.getElementById('memoTable');
+  table.innerHTML = '';
+  const n = built.s.length, m = built.t.length;
+  const headerRow = document.createElement('tr');
+  const corner = document.createElement('th');
+  corner.textContent = 'i\\j';
+  headerRow.appendChild(corner);
+  for(let j=-1;j<m;j++){
+    const th = document.createElement('th');
+    th.textContent = j;
+    headerRow.appendChild(th);
+  }
+  table.appendChild(headerRow);
+  for(let i=-1;i<n;i++){
+    const tr = document.createElement('tr');
+    const rh = document.createElement('th');
+    rh.textContent = i;
+    tr.appendChild(rh);
+    for(let j=-1;j<m;j++){
+      const td = document.createElement('td');
+      td.dataset.i = i;
+      td.dataset.j = j;
+      if(i===-1 && j===-1){ td.textContent='0'; td.classList.add('base-cell'); }
+      else if(i===-1){ td.textContent = j+1; td.classList.add('base-cell'); }
+      else if(j===-1){ td.textContent = i+1; td.classList.add('base-cell'); }
+      else td.textContent='?';
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+}
+
+function render(){
+  const step = built.steps[stepIndex];
+  document.getElementById('infoText').innerHTML = step.info;
+  highlightAlgo(step.algo);
+
+  const banner = document.getElementById('answerBanner');
+  if(step.type==='final'){
+    banner.innerHTML = step.info;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+
+  const snap = computeStateAt(built, stepIndex);
+
+  const pill = document.getElementById('phasePill');
+  pill.textContent = {tree:'Tree', memo:'Memoization', result:'Result'}[snap.phase];
+  pill.className = 'phase-pill ' + snap.phase;
+
+  document.querySelectorAll('#sStrip .schar').forEach(el=>el.classList.remove('hi'));
+  document.querySelectorAll('#tStrip .schar').forEach(el=>el.classList.remove('hi-t'));
+  if(snap.hiI!==null && snap.hiJ!==null && snap.hiI>=0 && snap.hiJ>=0){
+    const sEl = document.querySelectorAll('#sStrip .schar')[snap.hiI];
+    const tEl = document.querySelectorAll('#tStrip .schar')[snap.hiJ];
+    if(sEl) sEl.classList.add('hi');
+    if(tEl) tEl.classList.add('hi-t');
+  }
+
+  document.querySelectorAll('#diagramSvg g[data-id]').forEach(g=>{
+    const id = Number(g.dataset.id);
+    const nd = built.nodeMap[id];
+    const circle = g.querySelector('.node-circle');
+    circle.classList.remove('active','base-i','base-j','memo-hit','match','min3');
+    const isResolved = snap.resolvedVal[id] !== undefined;
+    const isEntered = snap.enteredIds.has(id);
+    if(isResolved){
+      circle.classList.add(nd.type);
+      let rtext = g.querySelector('.node-result');
+      if(!rtext){
+        rtext = document.createElementNS('http://www.w3.org/2000/svg','text');
+        rtext.setAttribute('class','node-result');
+        rtext.setAttribute('text-anchor','middle');
+        const p = built._pos[id];
+        rtext.setAttribute('x', p.x);
+        rtext.setAttribute('y', p.y + NODE_R + 13);
+        g.appendChild(rtext);
+      }
+      rtext.textContent = snap.resolvedVal[id];
+    } else if(isEntered){
+      circle.classList.add('active');
+      const rtext = g.querySelector('.node-result');
+      if(rtext) rtext.remove();
+    } else {
+      const rtext = g.querySelector('.node-result');
+      if(rtext) rtext.remove();
+    }
+  });
+
+  const activeSet = new Set(snap.activeStack);
+  document.querySelectorAll('#diagramSvg .edge').forEach(edgeEl=>{
+    const childId = Number(edgeEl.dataset.id);
+    edgeEl.classList.toggle('hot', activeSet.has(childId));
+  });
+
+  const memoWrap = document.getElementById('memoWrap');
+  memoWrap.style.display = stepIndex>1 ? 'block' : 'none';
+  document.querySelectorAll('#memoTable td').forEach(td=>{
+    const i = Number(td.dataset.i), j = Number(td.dataset.j);
+    if(i===-1 || j===-1) return;
+    let val = null;
+    Object.values(built.nodeMap).forEach(nd=>{
+      if(nd.i===i && nd.j===j && (nd.type==='match' || nd.type==='min3')){
+        if(snap.resolvedVal[nd.id]!==undefined) val = snap.resolvedVal[nd.id];
+      }
+    });
+    if(val!==null){
+      td.textContent = val;
+      td.classList.add('filled');
+    } else {
+      td.textContent = '?';
+      td.classList.remove('filled');
+    }
+  });
+
+  document.getElementById('progressText').textContent = `Step ${stepIndex} / ${built.steps.length-1}`;
+  document.getElementById('stepBackBtn').disabled = stepIndex===0;
+  document.getElementById('stepFwdBtn').disabled = stepIndex===built.steps.length-1;
+  document.getElementById('stepToLast').disabled = stepIndex===built.steps.length-1;
+}
+
+function updatePlayBtn(){ document.getElementById('playBtn').textContent = playing ? '⏸' : '▶'; }
+function stepForward(){ if(stepIndex < built.steps.length-1){ stepIndex++; render(); } else { stop(); } }
+function stepToLast() { if (stepIndex < built.steps.length - 1) { stepIndex = built.steps.length - 1; render(); } else { stop(); } }
+function stepBack(){ if(stepIndex>0){ stepIndex--; render(); } }
+function stop(){ playing=false; clearInterval(timer); updatePlayBtn(); }
+function play(){
+  if(stepIndex >= built.steps.length-1) stepIndex = 0;
+  playing = true; updatePlayBtn();
+  const speed = Number(document.getElementById('speedSlider').value);
+  clearInterval(timer);
+  timer = setInterval(()=>{
+    if(stepIndex >= built.steps.length-1){ stop(); render(); return; }
+    stepForward();
+  }, speed);
+}
+
+document.getElementById('playBtn').addEventListener('click', ()=> playing ? stop() : play());
+document.getElementById('stepFwdBtn').addEventListener('click', ()=>{ stop(); stepForward(); });
+document.getElementById('stepToLast').addEventListener('click', () => { stop(); stepToLast(); });
+document.getElementById('stepBackBtn').addEventListener('click', ()=>{ stop(); stepBack(); });
+document.getElementById('resetBtn').addEventListener('click', ()=>{ stop(); stepIndex=0; render(); });
+document.getElementById('speedSlider').addEventListener('input', ()=>{ if(playing) play(); });
+document.getElementById('zoomSlider').addEventListener('input', (e)=>{ applyZoom(Number(e.target.value)); });
+document.getElementById('fitBtn').addEventListener('click', fitZoom);
+window.addEventListener('resize', ()=>{ if(built) fitZoom(); });
+
+document.getElementById('buildBtn').addEventListener('click', ()=>{
+  const s1 = sanitize(document.getElementById('s1Input').value);
+  const s2 = sanitize(document.getElementById('s2Input').value);
+  const errEl = document.getElementById('buildErr');
+  if(s1.length<1 || s1.length>9 || s2.length<1 || s2.length>9){
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+  stop();
+  init(s1, s2);
+});
+
+init('horse', 'ros');
+</script>
+</body>
+</html>
