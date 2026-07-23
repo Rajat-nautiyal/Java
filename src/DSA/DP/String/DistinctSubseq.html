@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distinct Subsequences — Pick / Not-Pick Recursion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#F4EEDF;
+    --paper:#FFFDF7;
+    --ink:#2A2015;
+    --ink-soft:#6b5f4d;
+    --ledger:#D8CBAE;
+    --ledger-strong:#c2b394;
+    --blue-milk:#3E6E8E;
+    --blue-milk-soft:#dbe8ef;
+    --gold-coin:#B98527;
+    --gold-coin-soft:#f3e3c2;
+    --take-green:#4F8A5B;
+    --take-green-soft:#e0eee2;
+    --skip-slate:#867A63;
+    --skip-slate-soft:#eae5d8;
+    --stamp-final:#8C3B3B;
+    --stamp-final-soft:#f0dcd6;
+    --char-purple:#7A4FA3;
+    --shadow: 0 2px 0 rgba(42,32,21,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    background-image:
+      linear-gradient(var(--ledger) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ledger) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 20px 60px;
+  }
+  .wrap{max-width:1280px;margin:0 auto;}
+
+  header{margin-bottom:18px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--blue-milk);font-weight:600;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--blue-milk);display:inline-block;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,4vw,38px);margin:8px 0 10px;letter-spacing:-0.01em;}
+  h1 em{font-style:italic;color:var(--gold-coin);font-weight:500;}
+  .sub{max-width:820px;color:var(--ink-soft);font-size:15px;line-height:1.55;}
+  .sub code{background:var(--gold-coin-soft);padding:1px 5px;border-radius:4px;}
+
+  .card{background:var(--paper);border:1px solid var(--ledger-strong);border-radius:10px;box-shadow:var(--shadow);}
+
+  .controls{
+    position:sticky;top:12px;z-index:30;margin:0 0 16px;padding:12px 18px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--paper);box-shadow:0 4px 14px rgba(42,32,21,0.12);
+  }
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;
+    border:1px solid var(--ledger-strong);background:var(--paper);color:var(--ink);
+    padding:9px 14px;border-radius:7px;cursor:pointer;
+    transition:background .15s ease, transform .1s ease, color .15s ease, border-color .15s ease;
+  }
+  .btn:hover{border-color:var(--blue-milk);color:var(--blue-milk);}
+  .btn:active{transform:translateY(1px);}
+  .btn:focus-visible{outline:2px solid var(--blue-milk);outline-offset:2px;}
+  .btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .btn.primary:hover{background:var(--blue-milk);border-color:var(--blue-milk);color:#fff;}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn:disabled:hover{border-color:var(--ledger-strong);color:var(--ink);}
+  .speed-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;}
+  input[type=range]{accent-color:var(--blue-milk);}
+  .progress{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+
+  .stepper{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .stepper .stage{
+    flex:1;min-width:190px;padding:10px 14px;border-radius:8px;
+    border:1px solid var(--ledger-strong);background:var(--paper);
+    font-size:12.5px;color:var(--ink-soft);transition:all .3s ease;
+  }
+  .stepper .stage b{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;color:var(--ink-soft);}
+  .stepper .stage.on{background:var(--gold-coin-soft);border-color:var(--gold-coin);color:var(--ink);}
+  .stepper .stage.on b{color:var(--gold-coin);}
+  .stepper .stage.done{background:var(--take-green-soft);border-color:var(--take-green);color:var(--ink-soft);}
+  .stepper .stage.done b{color:var(--take-green);}
+
+  main{display:grid;grid-template-columns: 1fr 340px;gap:16px;align-items:start;}
+  @media(max-width:980px){ main{grid-template-columns:1fr;} }
+
+  .diagram-card{padding:18px;}
+  .diagram-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;}
+  .diagram-head-row h2{font-family:'Fraunces',serif;font-weight:600;font-size:18px;margin:0;}
+  .phase-pill{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;
+    padding:5px 12px;border-radius:20px;background:var(--blue-milk-soft);color:var(--blue-milk);
+    transition:background .3s ease, color .3s ease;
+  }
+  .phase-pill.tree{background:var(--gold-coin-soft);color:var(--gold-coin);}
+  .phase-pill.memo{background:var(--take-green-soft);color:var(--take-green);}
+
+  .strings-row{display:flex;gap:28px;margin-bottom:14px;flex-wrap:wrap;}
+  .string-block .strip-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;
+    color:var(--ink-soft);margin-bottom:6px;
+  }
+  .string-strip{display:flex;}
+  .schar{
+    width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;
+    border:1px solid var(--ledger);background:var(--paper);color:var(--ink-soft);
+    margin-right:2px;border-radius:5px;transition:background .25s ease,color .2s ease,border-color .2s ease;
+  }
+  .schar.hi{background:var(--gold-coin-soft);border-color:var(--gold-coin);color:var(--ink);}
+  .schar.hi-t{background:var(--blue-milk-soft);border-color:var(--blue-milk);color:var(--ink);}
+
+  .diagram-scroll{overflow:auto;max-height:480px;border:1px solid var(--ledger);border-radius:8px;padding:10px;background:var(--paper);}
+  svg#diagramSvg{display:block; overflow:visible;}
+
+  .node-circle{stroke-width:2px;transition:fill .3s ease, stroke .3s ease;fill:var(--paper);stroke:var(--ledger-strong);}
+  .node-circle.active{stroke:var(--ink);stroke-dasharray:5 3;animation:dashspin 1s linear infinite;}
+  @keyframes dashspin{to{stroke-dashoffset:-16;}}
+  .node-circle.base-j0{fill:var(--gold-coin-soft);stroke:var(--gold-coin);}
+  .node-circle.base-i0{fill:var(--stamp-final-soft);stroke:var(--stamp-final);}
+  .node-circle.memo-hit{fill:var(--blue-milk-soft);stroke:var(--blue-milk);}
+  .node-circle.match{fill:var(--take-green-soft);stroke:var(--take-green);}
+  .node-circle.skip-only{fill:var(--skip-slate-soft);stroke:var(--skip-slate);}
+  .node-text{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;text-anchor:middle;fill:var(--ink-soft);}
+  .node-char{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:800;text-anchor:middle;}
+  .node-char.s-char{fill:purple; color: purple;}
+  .node-char.t-char{fill:var(--blue-milk);}
+  .node-char.dim{fill:var(--ledger-strong);}
+  .node-result{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;text-anchor:middle;fill:var(--ink);dominant-baseline:hanging;}
+
+  .edge{stroke-width:2px;fill:none;opacity:0.3;transition:opacity .25s ease, stroke-width .25s ease;}
+  .edge.pick{stroke:var(--take-green);}
+  .edge.notpick{stroke:var(--stamp-final);}
+  .edge.hot{opacity:1;stroke-width:3.2px;}
+  .edge-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;}
+  .edge-label.pick{fill:var(--take-green);}
+  .edge-label.notpick{fill:var(--stamp-final);}
+
+  .memo-table-wrap{margin-top:14px;}
+  table.memo{border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:11px;}
+  table.memo th, table.memo td{
+    width:34px;height:30px;text-align:center;border:1px solid var(--ledger);transition:background .3s ease,color .2s ease;
+  }
+  table.memo th{background:var(--skip-slate-soft);color:var(--skip-slate);font-size:10px;}
+  table.memo td{background:var(--paper);color:var(--ledger-strong);}
+  table.memo td.filled{background:var(--take-green-soft);color:var(--take-green);border-color:var(--take-green);font-weight:700;}
+
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:12px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .swatch.line{border-radius:2px;height:3px;width:16px;}
+
+  aside{display:flex;flex-direction:column;gap:16px;}
+  .algo-card{padding:16px 0;}
+  .algo-card .label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-soft);padding:0 16px 10px;border-bottom:1px solid var(--ledger);margin-bottom:4px;
+  }
+  .algo-list{margin:0;padding:10px 16px 12px;font-size:13px;line-height:1.5;}
+  .algo-item{
+    padding:6px 8px;border-radius:6px;border-left:3px solid transparent;
+    transition:background .25s ease, border-color .2s ease, color .2s ease;color:var(--ink-soft);
+  }
+  .algo-item.heading{font-weight:700;color:var(--ink);margin-top:6px;}
+  .algo-item.sub{margin-left:14px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .algo-item.active{background:var(--gold-coin-soft);border-left-color:var(--gold-coin);color:var(--ink);font-weight:600;}
+
+  .info-card{padding:16px;}
+  .info-card .label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ink-soft);margin-bottom:8px;
+  }
+  .info-text{font-size:14px;line-height:1.55;min-height:110px;}
+  .info-text b{color:var(--blue-milk);}
+  .answer-banner{
+    display:none;margin-top:10px;padding:10px 12px;border-radius:8px;
+    background:var(--stamp-final);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;line-height:1.5;
+  }
+  .answer-banner.show{display:block;}
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="padding: 0%;">
+    <div class="eyebrow">LeetCode 115 · Pick / Not-Pick Recursion</div>
+    <h2>Distinct Subsequences — <em>pick or skip</em>, memoized</h2>
+    <div class="sub">helper(i, j) asks: "using the first <code>i</code> characters of <code>s</code>, how many ways can we form the first <code>j</code> characters of <code>t</code>?"</div>
+  </header>
+
+  <div class="card controls">
+    <button class="btn" id="resetBtn">⟲ Reset</button>
+    <button class="btn" id="stepBackBtn">◀ Step</button>
+    <button class="btn primary" id="playBtn">▶ Play</button>
+    <button class="btn" id="stepFwdBtn">Step ▶</button>
+    <button class="btn" id="stepToLast">▶▶</button>
+    <div class="speed-wrap">
+      Speed
+      <input type="range" id="speedSlider" min="150" max="1000" value="480" step="20">
+    </div>
+    <div class="progress" id="progressText">Step 0 / 0</div>
+  </div>
+
+  <main>
+    <div class="card diagram-card">
+      <div class="diagram-head-row" style = "">
+        <div style="display: flex; align-items: center; column-gap: 15px;"><h2>Helper(i, j)</h2> <span style="font-size: small;">i = s.len-1 , j = t.len - 1</span></div>
+        <span class="phase-pill" id="phasePill">Tree</span>
+      </div>
+
+      <div class="strings-row">
+        <div class="string-block">
+          <div class="strip-label" style="color: purple;">s = "babgbag"</div>
+          <div class="string-strip" id="sStrip"></div>
+        </div>
+        <div class="string-block">
+          <div class="strip-label" style="color: blue;">t = "bag"</div>
+          <div class="string-strip" id="tStrip"></div>
+        </div>
+      </div>
+
+      <div class="diagram-scroll">
+        <svg id="diagramSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+
+      <div class="memo-table-wrap" id="memoWrap" style="display:none;">
+        <div class="strip-label" style="margin-bottom:8px;">Memo table: dp[i][j]</div>
+        <table class="memo" id="memoTable"></table>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--char-purple);"></i>s[i-1] char (purple)</span>
+        <span><i class="swatch" style="background:var(--blue-milk);"></i>t[j-1] char (blue)</span>
+        <span><i class="swatch line" style="background:var(--take-green);"></i>pick edge: helper(i-1, j-1)</span>
+        <span><i class="swatch line" style="background:var(--stamp-final);"></i>not-pick edge: helper(i-1, j)</span>
+        <span><i class="swatch" style="background:var(--gold-coin-soft);"></i>base j=0 → 1</span>
+        <span><i class="swatch" style="background:var(--stamp-final-soft);"></i>base i=0 → 0</span>
+        <span><i class="swatch" style="background:var(--blue-milk-soft);"></i>memo cache hit</span>
+        <span><i class="swatch" style="background:var(--paper);border:2px dashed var(--ink);"></i>active call</span>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card algo-card">
+        <div class="label">Algorithm</div>
+        <div class="algo-list" id="algoList"></div>
+      </div>
+      <div class="card info-card">
+        <div class="label">What's happening</div>
+        <div class="info-text" id="infoText">Press play to walk through the algorithm.</div>
+        <div class="answer-banner" id="answerBanner"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+// ---------- plain-English algorithm panel (replaces the code panel) ----------
+const ALGO_LINES = [
+  {id:'base-heading', text:'Base cases:', cls:'heading'},
+  {id:'base-j0', text:'If j == 0, return 1 (empty string can always be formed).', cls:'sub'},
+  {id:'base-i0', text:"If i == 0, return 0 (can't form a non-empty t from an empty s).", cls:'sub'},
+  {id:'match-heading', text:'1. If s[i-1] == t[j-1]:', cls:'heading'},
+  {id:'pick', text:'Pick the current character: helper(i-1, j-1)', cls:'sub'},
+  {id:'notpick-match', text:'Skip the current character: helper(i-1, j)', cls:'sub'},
+  {id:'sum', text:'Store and return their sum.', cls:'sub'},
+  {id:'else-heading', text:'2. Otherwise, only skip the current character:', cls:'heading'},
+  {id:'notpick-only', text:'helper(i-1, j)', cls:'sub'},
+  {id:'return', text:'3. Return helper(n, m) as the final answer.', cls:'heading'},
+];
+
+const algoList = document.getElementById('algoList');
+ALGO_LINES.forEach(l=>{
+  const div = document.createElement('div');
+  div.className = 'algo-item ' + l.cls;
+  div.id = 'algo-' + l.id;
+  div.textContent = l.text;
+  algoList.appendChild(div);
+});
+function highlightAlgo(ids){
+  document.querySelectorAll('.algo-item').forEach(el=>el.classList.remove('active'));
+  (ids||[]).forEach(id=>{
+    const el = document.getElementById('algo-'+id);
+    if(el) el.classList.add('active');
+  });
+}
+
+// ---------- build trace ----------
+// Every node gets an explicit 'enter' event and later an explicit 'resolve' event
+// carrying its own node id directly, so replay never has to guess which node an
+// event belongs to.
+function buildSteps(){
+  const s = "babgbag", t = "bag";
+  const steps = [];
+  const push = st => steps.push(st);
+  const memo = {};
+  const nodeMap = {};
+  let nodeId = 0;
+
+  function helper(i, j, depth, parentId, edgeKind){
+    const id = nodeId++;
+    nodeMap[id] = {id, i, j, depth, parentId, edgeKind, type:'call', result:null};
+    push({type:'enter', id, i, j, algo:null, info:`helper(i=${i}, j=${j}) is called${edgeKind ? ` — this is the <b>${edgeKind==='pick'?'pick':'not-pick'}</b> branch of its parent.` : ' — this is the root call.'}`});
+
+    if(j===0){
+      nodeMap[id].type='base-j0'; nodeMap[id].result=1;
+      push({type:'resolve', id, val:1, algo:['base-j0'], info:`j == 0 → we've matched every character of t already. Return <b>1</b>.`});
+      return 1;
+    }
+    if(i===0){
+      nodeMap[id].type='base-i0'; nodeMap[id].result=0;
+      push({type:'resolve', id, val:0, algo:['base-i0'], info:`i == 0 but j &gt; 0 → ran out of s before finishing t. Return <b>0</b>.`});
+      return 0;
+    }
+    const key = i+','+j;
+    if(memo[key]!==undefined){
+      nodeMap[id].type='memo-hit'; nodeMap[id].result=memo[key];
+      push({type:'resolve', id, val:memo[key], algo:null, info:`dp[${i}][${j}] was already computed → return the cached value <b>${memo[key]}</b> instantly.`});
+      return memo[key];
+    }
+
+    const c1 = s[i-1], c2 = t[j-1];
+    if(c1===c2){
+      push({type:'branch', id, algo:['match-heading'], info:`s[${i-1}]='${c1}' == t[${j-1}]='${c2}' → two choices exist here.`});
+      push({type:'go-pick', id, algo:['pick'], info:`Take the <b>pick</b> branch first: helper(${i-1}, ${j-1}) — use this s-char to match t[${j-1}], and go all the way down that subtree before coming back.`});
+      const pick = helper(i-1, j-1, depth+1, id, 'pick');
+      push({type:'go-notpick', id, algo:['notpick-match'], info:`Back at helper(${i},${j}). Now take the <b>not-pick</b> branch: helper(${i-1}, ${j}) — skip this s-char, still need all of t[0..${j-1}].`});
+      const notpick = helper(i-1, j, depth+1, id, 'notpick');
+      const total = pick + notpick;
+      memo[key] = total;
+      nodeMap[id].type='match'; nodeMap[id].result=total;
+      push({type:'resolve', id, val:total, algo:['sum'], info:`Both branches are back: dp[${i}][${j}] = pick(${pick}) + not-pick(${notpick}) = <b>${total}</b>.`});
+      return total;
+    } else {
+      push({type:'branch', id, algo:['else-heading'], info:`s[${i-1}]='${c1}' != t[${j-1}]='${c2}' → can't pick, only one option.`});
+      push({type:'go-notpick', id, algo:['notpick-only'], info:`Take the <b>not-pick</b> branch: helper(${i-1}, ${j}).`});
+      const notpick = helper(i-1, j, depth+1, id, 'notpick');
+      memo[key] = notpick;
+      nodeMap[id].type='skip-only'; nodeMap[id].result=notpick;
+      push({type:'resolve', id, val:notpick, algo:null, info:`dp[${i}][${j}] = helper(${i-1}, ${j}) = <b>${notpick}</b>.`});
+      return notpick;
+    }
+  }
+
+  push({type:'start', id:null, algo:['return'], info:`numDistinct("${s}", "${t}") calls helper(${s.length}, ${t.length}) — this is the root of the tree.`});
+  const result = helper(s.length, t.length, 0, null, null);
+  push({type:'final', id:null, algo:['return'], info:`<b>numDistinct("${s}", "${t}") = ${result}</b>`});
+
+  return {steps, s, t, result, nodeMap};
+}
+
+// ---------- SVG tree layout ----------
+const NODE_R = 22;
+const SPACING_X = 76;
+const SPACING_Y = 82;
+const SVG_MARGIN = 40;
+
+function assignXPositions(built){
+  const nodes = built.nodeMap;
+  const childrenOf = {};
+  Object.values(nodes).forEach(nd=>{
+    if(nd.parentId!==null){
+      childrenOf[nd.parentId] = childrenOf[nd.parentId] || [];
+      childrenOf[nd.parentId].push(nd);
+    }
+  });
+  let cursor = 0;
+  function assign(id){
+    const nd = nodes[id];
+    const kids = (childrenOf[id]||[]).slice().sort((a,b)=> (a.edgeKind==='pick'?0:1) - (b.edgeKind==='pick'?0:1));
+    if(kids.length===0){
+      nd._x = cursor;
+      cursor += 1;
+    } else {
+      kids.forEach(k=> assign(k.id));
+      const xs = kids.map(k=>k._x);
+      nd._x = (Math.min(...xs) + Math.max(...xs)) / 2;
+    }
+  }
+  assign(0);
+}
+
+function buildTreeSVG(built){
+  assignXPositions(built);
+  const svg = document.getElementById('diagramSvg');
+  svg.innerHTML = '';
+  let maxX=0, maxY=0;
+  Object.values(built.nodeMap).forEach(nd=>{
+    maxX = Math.max(maxX, nd._x);
+    maxY = Math.max(maxY, nd.depth);
+  });
+  const width = SVG_MARGIN*2 + maxX*SPACING_X + NODE_R*2;
+  const height = SVG_MARGIN*2 + maxY*SPACING_Y + NODE_R*2 + 22;
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+  const edgeLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  svg.appendChild(edgeLayer);
+  const nodeLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  svg.appendChild(nodeLayer);
+
+  function posOf(nd){
+    return { x: SVG_MARGIN + NODE_R + nd._x*SPACING_X, y: SVG_MARGIN + NODE_R + nd.depth*SPACING_Y };
+  }
+  built._pos = {};
+  Object.values(built.nodeMap).forEach(nd=>{ built._pos[nd.id] = posOf(nd); });
+
+  Object.values(built.nodeMap).forEach(nd=>{
+    if(nd.parentId!==null){
+      const parent = built.nodeMap[nd.parentId];
+      const p1 = built._pos[parent.id], p2 = built._pos[nd.id];
+      const midY = (p1.y+p2.y)/2;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M ${p1.x} ${p1.y+NODE_R} C ${p1.x} ${midY}, ${p2.x} ${midY}, ${p2.x} ${p2.y-NODE_R}`);
+      path.setAttribute('class', 'edge ' + nd.edgeKind);
+      path.dataset.id = nd.id;
+      edgeLayer.appendChild(path);
+
+      const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('x', (p1.x+p2.x)/2 + (nd.edgeKind==='pick' ? -16 : 16));
+      label.setAttribute('y', midY - 3);
+      label.setAttribute('class', 'edge-label ' + nd.edgeKind);
+      label.setAttribute('text-anchor','middle');
+      label.textContent = nd.edgeKind==='pick' ? 'pick' : 'skip';
+      edgeLayer.appendChild(label);
+    }
+  });
+
+Object.values(built.nodeMap).forEach(nd => {
+    const p = built._pos[nd.id];
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.dataset.id = nd.id;
+    
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', p.x);
+    circle.setAttribute('cy', p.y);
+    circle.setAttribute('r', NODE_R);
+    circle.setAttribute('class', 'node-circle');
+    g.appendChild(circle);
+
+    const hasChars = nd.i > 0 && nd.j > 0;
+    
+    // (i,j) label - top of circle
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', p.x);
+    text.setAttribute('y', p.y - 8);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('class', 'node-text');
+    text.setAttribute('font-size', '9');
+    text.textContent = `i=${nd.i-1},j=${nd.j-1}`;
+    
+    g.appendChild(text);
+
+    // Characters - inside circle, below label
+    if (hasChars) {
+        const c1 = built.s[nd.i - 1];
+        const c2 = built.t[nd.j - 1];
+        const charText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        charText.setAttribute('x', p.x);
+        charText.setAttribute('y', p.y + 10);  // Inside circle, below label
+        charText.setAttribute('text-anchor', 'middle');
+        charText.setAttribute('class', 'node-char');
+        charText.setAttribute('font-size', '14');
+        charText.setAttribute('font-weight', 'bold');
+        
+        const tspanS = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanS.setAttribute('class', 's-char');
+        tspanS.textContent = c1;
+        tspanS.style.fill = "purple";
+        
+        const tspanSep = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanSep.setAttribute('class', 'dim');
+        tspanSep.textContent = '·';
+        tspanSep.style.fill = "#999";
+        
+        const tspanT = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanT.setAttribute('class', 't-char');
+        tspanT.textContent = c2;
+        tspanT.style.fill = "blue";
+        
+        charText.appendChild(tspanS);
+        charText.appendChild(tspanSep);
+        charText.appendChild(tspanT);
+        g.appendChild(charText);
+    }
+
+    nodeLayer.appendChild(g);
+});
+}
+
+// ---------- replay ----------
+function computeStateAt(built, idx){
+  const enteredIds = new Set();
+  const resolvedVal = {};   // id -> value, once resolved
+  const activeStack = [];   // ids currently on the call stack (entered, not yet resolved)
+  let phase = 'tree';
+  let hiI = null, hiJ = null;
+
+  for(let k=0;k<=idx;k++){
+    const ev = built.steps[k];
+    if(!ev) continue;
+    if(ev.type==='enter'){
+      enteredIds.add(ev.id);
+      activeStack.push(ev.id);
+      hiI = ev.i; hiJ = ev.j;
+    }
+    if(ev.type==='resolve'){
+      resolvedVal[ev.id] = ev.val;
+      const pos = activeStack.lastIndexOf(ev.id);
+      if(pos!==-1) activeStack.splice(pos,1);
+    }
+    if(ev.type!=='enter' && ev.id!==null && ev.id!==undefined){
+      const nd = built.nodeMap[ev.id];
+      if(nd && nd.i>0 && nd.j>0){ hiI = nd.i; hiJ = nd.j; }
+    }
+    if(ev.type==='go-pick' || ev.type==='go-notpick') phase = 'memo';
+    if(ev.type==='final') phase = 'result';
+  }
+  return { enteredIds, resolvedVal, activeStack, phase, hiI, hiJ };
+}
+
+// ---------- state / controls ----------
+let built, stepIndex, playing=false, timer=null;
+
+function init(){
+  built = buildSteps();
+  stepIndex = 0;
+  playing = false;
+  clearInterval(timer);
+  updatePlayBtn();
+  buildStringStrips();
+  buildTreeSVG(built);
+  buildMemoTableDOM();
+  render();
+}
+
+function buildStringStrips(){
+  const sStrip = document.getElementById('sStrip');
+  const tStrip = document.getElementById('tStrip');
+  sStrip.innerHTML=''; tStrip.innerHTML='';
+  built.s.split('').forEach(ch=>{
+    const d = document.createElement('div');
+    d.className='schar';
+    d.textContent=ch;
+    d.style.color = 'purple'
+    sStrip.appendChild(d);
+  });
+  built.t.split('').forEach(ch=>{
+    const d = document.createElement('div');
+    d.className='schar';
+    d.textContent=ch;
+    d.style.color = 'blue'
+    tStrip.appendChild(d);
+  });
+}
+
+function buildMemoTableDOM(){
+  const table = document.getElementById('memoTable');
+  table.innerHTML = '';
+  const n = built.s.length, m = built.t.length;
+  const headerRow = document.createElement('tr');
+  const corner = document.createElement('th');
+  corner.textContent = 'i\\j';
+  headerRow.appendChild(corner);
+  for(let j=0;j<=m;j++){
+    const th = document.createElement('th');
+    th.textContent = j;
+    headerRow.appendChild(th);
+  }
+  table.appendChild(headerRow);
+  for(let i=0;i<=n;i++){
+    const tr = document.createElement('tr');
+    const rh = document.createElement('th');
+    rh.textContent = i;
+    tr.appendChild(rh);
+    for(let j=0;j<=m;j++){
+      const td = document.createElement('td');
+      td.dataset.i = i;
+      td.dataset.j = j;
+      if(j===0){ td.textContent='1'; td.classList.add('filled'); }
+      else if(i===0){ td.textContent='0'; td.classList.add('filled'); }
+      else td.textContent='?';
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+}
+
+function render(){
+  const step = built.steps[stepIndex];
+  document.getElementById('infoText').innerHTML = step.info;
+  highlightAlgo(step.algo);
+
+  const banner = document.getElementById('answerBanner');
+  if(step.type==='final'){
+    banner.innerHTML = step.info;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+
+  const snap = computeStateAt(built, stepIndex);
+
+  const pill = document.getElementById('phasePill');
+  pill.textContent = {tree:'Tree', memo:'Memoization', result:'Result'}[snap.phase];
+  pill.className = 'phase-pill ' + snap.phase;
+
+  document.querySelectorAll('#sStrip .schar').forEach(el=>el.classList.remove('hi'));
+  document.querySelectorAll('#tStrip .schar').forEach(el=>el.classList.remove('hi-t'));
+  if(snap.hiI!==null && snap.hiJ!==null && snap.hiI>0 && snap.hiJ>0){
+    const sEl = document.querySelectorAll('#sStrip .schar')[snap.hiI-1];
+    const tEl = document.querySelectorAll('#tStrip .schar')[snap.hiJ-1];
+    if(sEl) sEl.classList.add('hi');
+    if(tEl) tEl.classList.add('hi-t');
+  }
+
+  // nodes
+  document.querySelectorAll('#diagramSvg g[data-id]').forEach(g=>{
+    const id = Number(g.dataset.id);
+    const nd = built.nodeMap[id];
+    const circle = g.querySelector('.node-circle');
+    circle.classList.remove('active','base-j0','base-i0','memo-hit','match','skip-only');
+    const isResolved = snap.resolvedVal[id] !== undefined;
+    const isEntered = snap.enteredIds.has(id);
+    if(isResolved){
+      circle.classList.add(nd.type);
+      let rtext = g.querySelector('.node-result');
+      if(!rtext){
+        rtext = document.createElementNS('http://www.w3.org/2000/svg','text');
+        rtext.setAttribute('class','node-result');
+        rtext.setAttribute('text-anchor','middle');
+        const p = built._pos[id];
+        rtext.setAttribute('x', p.x);
+        rtext.setAttribute('y', p.y + NODE_R + 13);
+        g.appendChild(rtext);
+      }
+      rtext.textContent = snap.resolvedVal[id];
+    } else if(isEntered){
+      circle.classList.add('active');
+      const rtext = g.querySelector('.node-result');
+      if(rtext) rtext.remove();
+    } else {
+      const rtext = g.querySelector('.node-result');
+      if(rtext) rtext.remove();
+    }
+  });
+
+  // edges: "hot" = edge leads to a node currently on the active call stack (i.e. an ancestor chain from root to the live call)
+  const activeSet = new Set(snap.activeStack);
+  document.querySelectorAll('#diagramSvg .edge').forEach(edgeEl=>{
+    const childId = Number(edgeEl.dataset.id);
+    edgeEl.classList.toggle('hot', activeSet.has(childId));
+  });
+
+  // memo table
+  const memoWrap = document.getElementById('memoWrap');
+  memoWrap.style.display = stepIndex>1 ? 'block' : 'none';
+  document.querySelectorAll('#memoTable td').forEach(td=>{
+    const i = Number(td.dataset.i), j = Number(td.dataset.j);
+    if(i===0 || j===0) return;
+    let val = null;
+    Object.values(built.nodeMap).forEach(nd=>{
+      if(nd.i===i && nd.j===j && (nd.type==='match' || nd.type==='skip-only')){
+        if(snap.resolvedVal[nd.id]!==undefined) val = snap.resolvedVal[nd.id];
+      }
+    });
+    if(val!==null){
+      td.textContent = val;
+      td.classList.add('filled');
+    } else {
+      td.textContent = '?';
+      td.classList.remove('filled');
+    }
+  });
+
+  document.getElementById('progressText').textContent = `Step ${stepIndex} / ${built.steps.length-1}`;
+  document.getElementById('stepBackBtn').disabled = stepIndex===0;
+  document.getElementById('stepFwdBtn').disabled = stepIndex===built.steps.length-1;
+  document.getElementById('stepToLast').disabled = stepIndex===built.steps.length-1;
+}
+
+function updatePlayBtn(){ document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Play'; }
+function stepForward(){ if(stepIndex < built.steps.length-1){ stepIndex++; render(); } else { stop(); } }
+function stepToLast() { if (stepIndex < built.steps.length - 1) { stepIndex = built.steps.length - 1; render(); } else { stop(); } }
+function stepBack(){ if(stepIndex>0){ stepIndex--; render(); } }
+function stop(){ playing=false; clearInterval(timer); updatePlayBtn(); }
+function play(){
+  if(stepIndex >= built.steps.length-1) stepIndex = 0;
+  playing = true; updatePlayBtn();
+  const speed = Number(document.getElementById('speedSlider').value);
+  clearInterval(timer);
+  timer = setInterval(()=>{
+    if(stepIndex >= built.steps.length-1){ stop(); render(); return; }
+    stepForward();
+  }, speed);
+}
+
+document.getElementById('playBtn').addEventListener('click', ()=> playing ? stop() : play());
+document.getElementById('stepFwdBtn').addEventListener('click', ()=>{ stop(); stepForward(); });
+document.getElementById('stepToLast').addEventListener('click', () => { stop(); stepToLast(); });
+
+document.getElementById('stepBackBtn').addEventListener('click', ()=>{ stop(); stepBack(); });
+document.getElementById('resetBtn').addEventListener('click', ()=>{ stop(); stepIndex=0; render(); });
+document.getElementById('speedSlider').addEventListener('input', ()=>{ if(playing) play(); });
+
+init();
+</script>
+</body>
+</html>

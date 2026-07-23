@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SCS — (i, j) Memoized Recursion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --parchment: #F4EEDF;
+            --paper: #FFFDF7;
+            --ink: #2A2015;
+            --ink-soft: #6b5f4d;
+            --ledger: #D8CBAE;
+            --ledger-strong: #c2b394;
+            --blue-milk: #3E6E8E;
+            --blue-milk-soft: #dbe8ef;
+            --gold-coin: #B98527;
+            --gold-coin-soft: #f3e3c2;
+            --take-green: #4F8A5B;
+            --take-green-soft: #e0eee2;
+            --skip-slate: #867A63;
+            --skip-slate-soft: #eae5d8;
+            --stamp-final: #8C3B3B;
+            --shadow: 0 2px 0 rgba(42, 32, 21, 0.08);
+        }
+        * {
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--parchment);
+            background-image: linear-gradient(var(--ledger) 1px, transparent 1px),
+                linear-gradient(90deg, var(--ledger) 1px, transparent 1px);
+            background-size: 28px 28px;
+            color: var(--ink);
+            font-family: 'Inter', sans-serif;
+            padding: 32px 20px 60px;
+        }
+        .wrap {
+            max-width: 1220px;
+            margin: 0 auto;
+        }
+        header {
+            margin-bottom: 18px;
+        }
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--blue-milk);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .eyebrow::before {
+            content: "";
+            width: 22px;
+            height: 1px;
+            background: var(--blue-milk);
+            display: inline-block;
+        }
+        h1 {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: clamp(24px, 4vw, 38px);
+            margin: 8px 0 10px;
+            letter-spacing: -0.01em;
+        }
+        h1 em {
+            font-style: italic;
+            color: var(--gold-coin);
+            font-weight: 500;
+        }
+        .sub {
+            max-width: 700px;
+            color: var(--ink-soft);
+            font-size: 15px;
+            line-height: 1.55;
+        }
+        .card {
+            background: var(--paper);
+            border: 1px solid var(--ledger-strong);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        .controls {
+            position: sticky;
+            top: 12px;
+            z-index: 30;
+            margin: 0 0 20px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            background: var(--paper);
+            box-shadow: 0 4px 14px rgba(42, 32, 21, 0.12);
+        }
+        .btn {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid var(--ledger-strong);
+            background: var(--paper);
+            color: var(--ink);
+            padding: 9px 14px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background .15s ease, transform .1s ease, color .15s ease, border-color .15s ease;
+        }
+        .btn:hover {
+            border-color: var(--blue-milk);
+            color: var(--blue-milk);
+        }
+        .btn:active {
+            transform: translateY(1px);
+        }
+        .btn:focus-visible {
+            outline: 2px solid var(--blue-milk);
+            outline-offset: 2px;
+        }
+        .btn.primary {
+            background: var(--ink);
+            color: var(--paper);
+            border-color: var(--ink);
+        }
+        .btn.primary:hover {
+            background: var(--blue-milk);
+            border-color: var(--blue-milk);
+            color: #fff;
+        }
+        .btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .btn:disabled:hover {
+            border-color: var(--ledger-strong);
+            color: var(--ink);
+        }
+        .speed-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--ink-soft);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        input[type=range] {
+            accent-color: var(--blue-milk);
+        }
+        .progress {
+            margin-left: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+        .shelves {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .shelf {
+            padding: 14px 18px;
+            flex: 0 0 auto;
+        }
+        .shelf-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ink-soft);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .shelf-title .tag {
+            font-size: 10.5px;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: var(--gold-coin-soft);
+            color: var(--gold-coin);
+        }
+        .chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            min-height: 40px;
+        }
+        .chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--ledger-strong);
+            background: var(--gold-coin-soft);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gold-coin);
+        }
+        .chip.target {
+            background: var(--blue-milk-soft);
+            color: var(--blue-milk);
+            border-color: var(--blue-milk);
+            font-size: 14px;
+        }
+        main {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 16px;
+            align-items: start;
+        }
+        @media(max-width:900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+        .tree-card {
+            padding: 18px;
+        }
+        .tree-head-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+        .tree-head-row h2 {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 0;
+        }
+        .tree-head-row .hint {
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+
+        /* ---- String Display ---- */
+        .string-display {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--ledger);
+        }
+        .string-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+        .string-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--ink-soft);
+            min-width: 45px;
+        }
+        .string-chars {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+        .string-chars .char {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--ink);
+            transition: all 0.25s ease;
+            min-width: 28px;
+            text-align: center;
+        }
+        .string-chars .char.active-char {
+            background: #facc15;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.6);
+            transform: scale(1.15);
+            color: #0f172a;
+        }
+
+        .tree-scroll {
+            overflow: auto;
+            max-height: 480px;
+            border: 1px solid var(--ledger);
+            border-radius: 8px;
+            background: repeating-linear-gradient(0deg, transparent, transparent 27px, var(--ledger) 28px);
+        }
+        svg#treeSvg {
+            display: block;
+        }
+        .node-circle {
+            fill: var(--paper);
+            stroke: var(--ledger-strong);
+            stroke-width: 2px;
+            transition: fill .3s ease, stroke .3s ease;
+        }
+        .node-group {
+            opacity: 0;
+            transition: opacity .35s ease;
+        }
+        .node-group.revealed {
+            opacity: 1;
+        }
+        .node-group.active .node-circle {
+            stroke: var(--ink);
+            stroke-dasharray: 5 3;
+            animation: dashspin 1.1s linear infinite;
+        }
+        @keyframes dashspin {
+            to {
+                stroke-dashoffset: -16;
+            }
+        }
+        .node-group.pop {
+            animation: popIn .4s ease;
+        }
+        @keyframes popIn {
+            0% {
+                transform: scale(0.4);
+            }
+            60% {
+                transform: scale(1.12);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .node-group.valid .node-circle {
+            fill: var(--take-green-soft);
+            stroke: var(--take-green);
+        }
+        .node-group.invalid .node-circle {
+            fill: var(--skip-slate-soft);
+            stroke: var(--skip-slate);
+        }
+        .node-group.memo .node-circle {
+            stroke: var(--gold-coin);
+            stroke-width: 3px;
+        }
+        .node-lbl {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            font-weight: 700;
+            fill: var(--ink-soft);
+        }
+        .node-idx {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            fill: var(--gold-coin);
+            letter-spacing: 0.03em;
+        }
+        .node-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            font-weight: 700;
+            fill: var(--ink);
+        }
+        .node-group.valid .node-val {
+            fill: var(--take-green);
+        }
+        .node-group.invalid .node-val {
+            fill: var(--skip-slate);
+        }
+        .edge {
+            stroke: var(--ledger-strong);
+            stroke-width: 2px;
+            fill: none;
+            opacity: 0;
+            transition: opacity .35s ease, stroke .3s ease;
+        }
+        .edge.revealed {
+            opacity: 1;
+        }
+        .edge.hot {
+            stroke: var(--gold-coin);
+            stroke-width: 2.5px;
+        }
+        .edge.take1-edge {
+            stroke-dasharray: 0;
+        }
+        .edge.take2-edge {
+            stroke-dasharray: 4 3;
+        }
+        .edge.match-edge {
+            stroke: var(--blue-milk);
+            stroke-width: 2.5px;
+        }
+        .edge-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            font-weight: 700;
+            fill: var(--gold-coin);
+            opacity: 0;
+            transition: opacity .35s ease;
+        }
+        .edge-label.revealed {
+            opacity: 1;
+        }
+        aside {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .code-card {
+            padding: 16px 0;
+        }
+        .code-card .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ink-soft);
+            padding: 0 16px 10px;
+            border-bottom: 1px solid var(--ledger);
+            margin-bottom: 4px;
+        }
+        pre.code {
+            margin: 0;
+            padding: 6px 0 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        pre.code .line {
+            display: block;
+            padding: 1px 16px;
+            white-space: pre;
+            color: var(--ink-soft);
+            border-left: 3px solid transparent;
+            transition: background .25s ease, color .2s ease, border-color .2s ease;
+        }
+        pre.code .line.active {
+            background: var(--gold-coin-soft);
+            color: var(--ink);
+            border-left: 3px solid var(--gold-coin);
+            font-weight: 600;
+        }
+        .info-card {
+            padding: 16px;
+        }
+        .info-card .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ink-soft);
+            margin-bottom: 8px;
+        }
+        .info-text {
+            font-size: 14px;
+            line-height: 1.55;
+            min-height: 66px;
+        }
+        .info-text b {
+            color: var(--blue-milk);
+        }
+        .answer-banner {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: var(--stamp-final);
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .answer-banner.show {
+            display: block;
+        }
+        .grid-card {
+            padding: 18px;
+            margin-top: 16px;
+            overflow-x: auto;
+        }
+        .grid-head-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+        }
+        .grid-head-row h2 {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 0;
+        }
+        .grid-head-row .hint {
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+        table.dp {
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            width: 100%;
+        }
+        table.dp th,
+        table.dp td {
+            min-width: 70px;
+            height: 42px;
+            text-align: center;
+            border: 1px solid var(--ledger);
+            font-size: 12px;
+            position: relative;
+            padding: 0 4px;
+        }
+        table.dp th {
+            font-weight: 700;
+            background: var(--paper);
+            font-size: 11px;
+            color: var(--ink-soft);
+        }
+        table.dp th.corner {
+            background: transparent;
+            border: none;
+        }
+        table.dp th.col-head.active-col {
+            background: var(--blue-milk-soft);
+            color: var(--blue-milk);
+        }
+        table.dp th.row-head.active-row {
+            background: var(--gold-coin-soft);
+            color: var(--gold-coin);
+        }
+        table.dp th.row-head {
+            white-space: nowrap;
+            text-align: right;
+            padding-right: 8px;
+        }
+        table.dp td {
+            background: var(--paper);
+            color: var(--ledger-strong);
+            font-weight: 700;
+            transition: background .3s ease, color .2s ease, transform .2s ease;
+            font-size: 11px;
+            word-break: break-all;
+        }
+        table.dp td.filled {
+            color: var(--ink);
+        }
+        table.dp td.valid {
+            background: var(--take-green-soft);
+            color: var(--take-green);
+        }
+        table.dp td.invalid {
+            background: var(--skip-slate-soft);
+            color: var(--skip-slate);
+        }
+        table.dp td.current-target {
+            box-shadow: inset 0 0 0 2px var(--ink);
+        }
+        table.dp td.stamp {
+            animation: stampIn .5s ease;
+        }
+        @keyframes stampIn {
+            0% {
+                transform: scale(1.6);
+            }
+            60% {
+                transform: scale(0.94);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 11.5px;
+            color: var(--ink-soft);
+            margin-top: 10px;
+        }
+        .legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .legend .dashline {
+            display: inline-block;
+            width: 16px;
+            border-top: 2px dashed var(--ledger-strong);
+        }
+        .legend .solidline {
+            display: inline-block;
+            width: 16px;
+            border-top: 2px solid var(--ledger-strong);
+        }
+        .legend .blueline {
+            display: inline-block;
+            width: 16px;
+            border-top: 2px solid var(--blue-milk);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div class="eyebrow">LeetCode 1092 · Top‑Down DP over (i, j)</div>
+            <h2>Shortest Common Supersequence — <em>i / j</em> memoized recursion</h2>
+        </header>
+
+        <div class="card controls">
+            <button class="btn" id="newExampleBtn">🎲 New example</button>
+            <button class="btn" id="resetBtn">⟲ Reset</button>
+            <button class="btn" id="stepBackBtn">◀ Step</button>
+            <button class="btn primary" id="playBtn">▶ Play</button>
+            <button class="btn" id="stepFwdBtn">Step ▶</button>
+            <button class="btn" id="stepToLast">▶▶</button>
+            <div class="speed-wrap">
+                Speed
+                <input type="range" id="speedSlider" min="120" max="900" value="450" step="20" />
+            </div>
+            <div class="progress" id="progressText">Step 0 / 0</div>
+        </div>
+
+        <!-- <section class="shelves">
+            <div class="card shelf">
+                <div class="shelf-title">Strings <span class="tag">str1 · str2</span></div>
+                <div class="chips" id="stringChips"></div>
+            </div>
+        </section> -->
+
+        <main>
+            <div class="card tree-card">
+                <div class="tree-head-row">
+                    <h2>Call tree — dfs(i, j)</h2>
+                    <span class="hint">solid = take str1, dashed = take str2, blue = match</span>
+                </div>
+
+                <!-- String Display (stacked) -->
+                <div class="string-display">
+                    <div class="string-row">
+                        <span class="string-label">str1:</span>
+                        <span id="str1Display" class="string-chars"></span>
+                    </div>
+                    <div class="string-row">
+                        <span class="string-label">str2:</span>
+                        <span id="str2Display" class="string-chars"></span>
+                    </div>
+                </div>
+
+                <div class="tree-scroll">
+                    <svg id="treeSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+                <div class="legend">
+                    <span><i class="swatch" style="background:var(--take-green-soft);border:1px solid var(--take-green);"></i>finite answer</span>
+                    <span><i class="swatch" style="background:var(--paper);border:2px solid var(--gold-coin);"></i>memo cache hit</span>
+                    <span><i class="swatch" style="background:var(--paper);border:2px dashed var(--ink);"></i>currently computing</span>
+                    <span><i class="solidline"></i>take str1</span>
+                    <span><i class="dashline"></i>take str2</span>
+                    <span><i class="blueline"></i>match</span>
+                </div>
+            </div>
+
+            <aside>
+                <div class="card info-card">
+                    <div class="label">What's happening</div>
+                    <div class="info-text" id="infoText">Press play to walk through the recursion.</div>
+                    <div class="answer-banner" id="answerBanner"></div>
+                </div>
+                <div class="card code-card">
+                    <div class="label">Solution.java</div>
+                    <pre class="code" id="codeHost"></pre>
+                </div>
+            </aside>
+        </main>
+
+        <div class="card grid-card">
+            <div class="grid-head-row">
+                <h2>dp[i][j] memo table</h2>
+                <span class="hint" id="gridHint">fills in whatever order the recursion visits it</span>
+            </div>
+            <div id="tableHost"></div>
+        </div>
+    </div>
+
+    <script>
+        // ─── CODE LINES ──────────────────────────────────────────────
+        const CODE_LINES = [
+            { n: 1, text: "class Solution {" },
+            { n: 2, text: "    public String shortestCommonSupersequence(String str1, String str2) {" },
+            { n: 3, text: "        String[][] dp = new String[str1.length()+1][str2.length()+1];" },
+            { n: 4, text: "        return dfs(str1, str2, 0, 0, dp);" },
+            { n: 5, text: "    }" },
+            { n: 6, text: "    private String dfs(String str1, String str2, int i, int j, String[][] dp) {" },
+            { n: 7, text: "        if (i == str1.length()) return str2.substring(j);" },
+            { n: 8, text: "        if (j == str2.length()) return str1.substring(i);" },
+            { n: 9, text: "        if(dp[i][j] != null) return dp[i][j];" },
+            { n: 10, text: "        if (str1.charAt(i) == str2.charAt(j)) {" },
+            { n: 11, text: "            dp[i][j] = str1.charAt(i) + dfs(str1, str2, i + 1, j + 1, dp);" },
+            { n: 12, text: "            return dp[i][j];" },
+            { n: 13, text: "        }" },
+            { n: 14, text: "        String option1 = str1.charAt(i) + dfs(str1, str2, i + 1, j, dp);" },
+            { n: 15, text: "        String option2 = str2.charAt(j) + dfs(str1, str2, i, j + 1, dp);" },
+            { n: 16, text: "        dp[i][j] = option1.length() <= option2.length() ? option1 : option2;" },
+            { n: 17, text: "        return dp[i][j];" },
+            { n: 18, text: "    }" },
+            { n: 19, text: "}" },
+        ];
+
+        const STEP_TO_LINES = {
+            start: [2, 3, 4],
+            enter: [6],
+            'base-i': [7],
+            'base-j': [8],
+            'memo-hit': [9],
+            'match': [10, 11],
+            'match-return': [12],
+            'branch': [14, 15],
+            'take-str1-call': [14],
+            'take-str1-return': [14],
+            'take-str2-call': [15],
+            'take-str2-return': [15],
+            'store': [16, 17],
+            'return': [17],
+            'final': [4],
+        };
+
+        const codeHost = document.getElementById('codeHost');
+        CODE_LINES.forEach(l => {
+            const span = document.createElement('span');
+            span.className = 'line';
+            span.dataset.line = l.n;
+            span.textContent = l.text.length ? l.text : ' ';
+            codeHost.appendChild(span);
+        });
+
+        function highlightCode(type) {
+            const active = new Set(STEP_TO_LINES[type] || []);
+            codeHost.querySelectorAll('.line').forEach(el => {
+                el.classList.toggle('active', active.has(Number(el.dataset.line)));
+            });
+        }
+
+        // ─── SIMULATE ──────────────────────────────────────────────────
+        function simulate(str1, str2) {
+            const len1 = str1.length,
+                len2 = str2.length;
+            const steps = [];
+            const dp = Array.from({ length: len1 + 1 }, () => Array(len2 + 1).fill(null));
+            const nodes = {};
+            let idCounter = 0;
+
+            steps.push({ type: 'start', info: `dp[i][j] is a ${len1+1}×${len2+1} grid. Kick off with dfs(0,0).` });
+
+            function dfs(i, j, parentId = null, edgeType = null) {
+                const id = idCounter++;
+                const depth = parentId === null ? 0 : nodes[parentId].depth + 1;
+                const node = { id, i, j, parentId, edgeType, depth, children: [], status: 'active', value: null };
+                nodes[id] = node;
+                if (parentId !== null) nodes[parentId].children.push(id);
+                node.enterStep = steps.length;
+
+                const label = parentId === null ?
+                    `Call <b>dfs(${i},${j})</b>.` :
+                    edgeType === 'take-str1' ?
+                    `take str1[${i}] → dfs(${i+1},${j})` :
+                    edgeType === 'take-str2' ?
+                    `take str2[${j}] → dfs(${i},${j+1})` :
+                    `match → dfs(${i+1},${j+1})`;
+
+                steps.push({ type: 'enter', id, i, j, info: label });
+
+                // base i == len1
+                if (i === len1) {
+                    const val = str2.substring(j);
+                    dp[i][j] = val;
+                    node.status = 'base';
+                    node.value = val;
+                    steps.push({ type: 'base-i', id, info: `i == len1 → return remaining str2: <b>"${val}"</b>.` });
+                    node.returnStep = steps.length;
+                    steps.push({ type: 'return', id, value: val, info: `dfs(${i},${j}) returns "${val}".` });
+                    return val;
+                }
+                // base j == len2
+                if (j === len2) {
+                    const val = str1.substring(i);
+                    dp[i][j] = val;
+                    node.status = 'base';
+                    node.value = val;
+                    steps.push({ type: 'base-j', id, info: `j == len2 → return remaining str1: <b>"${val}"</b>.` });
+                    node.returnStep = steps.length;
+                    steps.push({ type: 'return', id, value: val, info: `dfs(${i},${j}) returns "${val}".` });
+                    return val;
+                }
+
+                // memo hit
+                if (dp[i][j] !== null) {
+                    node.status = 'memo-hit';
+                    node.value = dp[i][j];
+                    steps.push({ type: 'memo-hit', id, i, j, value: dp[i][j],
+                        info: `dp[${i}][${j}] already <b>"${dp[i][j]}"</b> — cache hit.` });
+                    node.returnStep = steps.length;
+                    steps.push({ type: 'return', id, value: dp[i][j],
+                    info: `dfs(${i},${j}) returns cached "${dp[i][j]}".` });
+                    return dp[i][j];
+                }
+
+                // match
+                if (str1[i] === str2[j]) {
+                    steps.push({ type: 'match', id,
+                    info: `Match: '${str1[i]}' == '${str2[j]}'. Include once and recurse.` });
+                    const childVal = dfs(i + 1, j + 1, id, 'match');
+                    const val = str1[i] + childVal;
+                    dp[i][j] = val;
+                    node.status = 'computed';
+                    node.value = val;
+                    steps.push({ type: 'match-return', id, val,
+                        info: `Result: <b>"${val}"</b> = '${str1[i]}' + "${childVal}".` });
+                    node.returnStep = steps.length;
+                    steps.push({ type: 'return', id, value: val, info: `dfs(${i},${j}) returns "${val}".` });
+                    return val;
+                }
+
+                // branch
+                steps.push({ type: 'branch', id, info: `No match (${str1[i]} != ${str2[j]}), explore two options.` });
+
+                // option 1: take from str1
+                steps.push({ type: 'take-str1-call', id,
+                    info: `Option1: take '${str1[i]}' + dfs(${i+1},${j}).` });
+                const sub1 = dfs(i + 1, j, id, 'take-str1');
+                const opt1Val = str1[i] + sub1;
+                steps.push({ type: 'take-str1-return', id, opt1: opt1Val,
+                    info: `Option1 result: <b>"${opt1Val}"</b>.` });
+
+                // option 2: take from str2
+                steps.push({ type: 'take-str2-call', id,
+                    info: `Option2: take '${str2[j]}' + dfs(${i},${j+1}).` });
+                const sub2 = dfs(i, j + 1, id, 'take-str2');
+                const opt2Val = str2[j] + sub2;
+                steps.push({ type: 'take-str2-return', id, opt2: opt2Val,
+                    info: `Option2 result: <b>"${opt2Val}"</b>.` });
+
+                const val = opt1Val.length <= opt2Val.length ? opt1Val : opt2Val;
+                dp[i][j] = val;
+                node.status = 'computed';
+                node.value = val;
+                steps.push({ type: 'store', id, i, j, opt1: opt1Val, opt2: opt2Val, val,
+                    info: `dp[${i}][${j}] = shorter(opt1="${opt1Val}", opt2="${opt2Val}") = <b>"${val}"</b>.` });
+                node.returnStep = steps.length;
+                steps.push({ type: 'return', id, value: val, info: `dfs(${i},${j}) returns "${val}".` });
+                return val;
+            }
+
+            const result = dfs(0, 0);
+            steps.push({ type: 'final', value: result,
+                info: `Done! Shortest Common Supersequence: <b>"${result}"</b> (length ${result.length}).` });
+
+            // layout
+            let leafCounter = 0;
+
+            function assignX(id) {
+                const node = nodes[id];
+                if (node.children.length === 0) { node.x = leafCounter;
+                    leafCounter++; } else {
+                    node.children.forEach(assignX);
+                    const xs = node.children.map(c => nodes[c].x);
+                    node.x = (Math.min(...xs) + Math.max(...xs)) / 2;
+                }
+            }
+            assignX(0);
+            return { steps, dp, nodes, rootId: 0, leafCount: leafCounter, str1, str2, len1, len2, result };
+        }
+
+        // ─── SVG TREE ──────────────────────────────────────────────────
+        const NODE_R = 30,
+            SPACING_X = 70,
+            SPACING_Y = 110,
+            MARGIN = 40;
+
+        function buildTreeSVG(built) {
+            const svg = document.getElementById('treeSvg');
+            svg.innerHTML = '';
+            const { nodes, leafCount } = built;
+            let maxDepth = 0;
+            Object.values(nodes).forEach(n => { if (n.depth > maxDepth) maxDepth = n.depth; });
+            const width = Math.max(leafCount * SPACING_X + MARGIN * 2, 400);
+            const height = (maxDepth + 1) * SPACING_Y + MARGIN * 2;
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+            const px = n => MARGIN + n.x * SPACING_X + SPACING_X / 2;
+            const py = n => MARGIN + n.depth * SPACING_Y + 10;
+
+            const edgeLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            const nodeLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            svg.appendChild(edgeLayer);
+            svg.appendChild(nodeLayer);
+
+            Object.values(nodes).forEach(node => {
+                if (node.parentId !== null) {
+                    const parent = nodes[node.parentId];
+                    const x1 = px(parent),
+                        y1 = py(parent) + NODE_R;
+                    const x2 = px(node),
+                        y2 = py(node) - NODE_R;
+                    const midY = (y1 + y2) / 2;
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    let cls = 'edge ';
+                    if (node.edgeType === 'take-str1') cls += 'take1-edge';
+                    else if (node.edgeType === 'take-str2') cls += 'take2-edge';
+                    else if (node.edgeType === 'match') cls += 'match-edge';
+                    path.setAttribute('class', cls);
+                    path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`);
+                    path.dataset.id = node.id;
+                    edgeLayer.appendChild(path);
+
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', (x1 + x2) / 2);
+                    label.setAttribute('y', midY - 4);
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('class', 'edge-label');
+                    label.dataset.id = node.id;
+                    if (node.edgeType === 'take-str1') label.textContent = `'${built.str1[parent.i]}'`;
+                    else if (node.edgeType === 'take-str2') label.textContent = `'${built.str2[parent.j]}'`;
+                    else if (node.edgeType === 'match') label.textContent = `'${built.str1[parent.i]}'`;
+                    edgeLayer.appendChild(label);
+                }
+            });
+
+            Object.values(nodes).forEach(node => {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'node-group');
+                g.dataset.id = node.id;
+                g.setAttribute('transform', `translate(${px(node)}, ${py(node)})`);
+
+                const idxText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                idxText.setAttribute('class', 'node-idx');
+                idxText.setAttribute('text-anchor', 'middle');
+                idxText.setAttribute('y', -NODE_R - 8);
+                idxText.textContent = `i=${node.i}, j=${node.j}`;
+                g.appendChild(idxText);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('r', NODE_R);
+                circle.setAttribute('class', 'node-circle');
+                g.appendChild(circle);
+
+                const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                lbl.setAttribute('class', 'node-lbl');
+                lbl.setAttribute('text-anchor', 'middle');
+                lbl.setAttribute('y', -6);
+                const c1 = node.i < built.len1 ? built.str1[node.i] : '-';
+                const c2 = node.j < built.len2 ? built.str2[node.j] : '-';
+                lbl.textContent = `(${c1},${c2})`;
+                g.appendChild(lbl);
+
+                const valText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                valText.setAttribute('class', 'node-val');
+                valText.setAttribute('text-anchor', 'middle');
+                valText.setAttribute('y', 14);
+                valText.dataset.role = 'value';
+                g.appendChild(valText);
+                nodeLayer.appendChild(g);
+            });
+        }
+
+        function buildTableDOM(built) {
+            const host = document.getElementById('tableHost');
+            host.innerHTML = '';
+            const { len1, len2 } = built;
+            const table = document.createElement('table');
+            table.className = 'dp';
+            const headRow = document.createElement('tr');
+            headRow.appendChild(document.createElement('th')).className = 'corner';
+            for (let j = 0; j <= len2; j++) {
+                const th = document.createElement('th');
+                th.className = 'col-head';
+                th.dataset.j = j;
+                th.textContent = j;
+                headRow.appendChild(th);
+            }
+            table.appendChild(headRow);
+            for (let i = len1; i >= 0; i--) {
+                const row = document.createElement('tr');
+                const rh = document.createElement('th');
+                rh.className = 'row-head';
+                rh.dataset.i = i;
+                rh.textContent = `i=${i}`;
+                row.appendChild(rh);
+                for (let j = 0; j <= len2; j++) {
+                    const td = document.createElement('td');
+                    td.dataset.i = i;
+                    td.dataset.j = j;
+                    row.appendChild(td);
+                }
+                table.appendChild(row);
+            }
+            host.appendChild(table);
+        }
+
+        // ─── STRING DISPLAY UPDATE ──────────────────────────────────────
+        function updateStringDisplay(step) {
+            const str1 = built.str1;
+            const str2 = built.str2;
+            const i = step.i;
+            const j = step.j;
+            // Determine which chars to highlight
+            let highlightI = false;
+            let highlightJ = false;
+            // For match and take-str1 steps, highlight i on str1
+            if (step.type === 'match' || step.type === 'match-return' ||
+                step.type === 'take-str1-call' || step.type === 'take-str1-return') {
+                highlightI = true;
+            }
+            // For match and take-str2 steps, highlight j on str2
+            if (step.type === 'match' || step.type === 'match-return' ||
+                step.type === 'take-str2-call' || step.type === 'take-str2-return') {
+                highlightJ = true;
+            }
+            // For 'enter' we might also want to show the positions without glow? We'll not highlight.
+            // For 'base' and 'store' and 'return', we can show the last taken char? We'll keep it simple.
+
+            // Build str1 HTML
+            let html1 = '';
+            for (let idx = 0; idx < str1.length; idx++) {
+                const ch = str1[idx];
+                let cls = 'char';
+                if (highlightI && idx === i) cls += ' active-char';
+                html1 += `<span class="${cls}">${ch}</span>`;
+            }
+            document.getElementById('str1Display').innerHTML = html1;
+
+            // Build str2 HTML
+            let html2 = '';
+            for (let idx = 0; idx < str2.length; idx++) {
+                const ch = str2[idx];
+                let cls = 'char';
+                if (highlightJ && idx === j) cls += ' active-char';
+                html2 += `<span class="${cls}">${ch}</span>`;
+            }
+            document.getElementById('str2Display').innerHTML = html2;
+        }
+
+        // ─── STATE ─────────────────────────────────────────────────────
+        let str1, str2, built, stepIndex, playing = false,
+            timer = null;
+
+        const EXAMPLES = [
+            { s1: "abcab", s2: "cab" },
+            { s1: "brute", s2: "groot" },
+            { s1: "abc", s2: "acb" },
+            { s1: "AGGTAB", s2: "GXTXAYB" },
+            { s1: "geek", s2: "eke" },
+            { s1: "abac", s2: "cab" },
+        ];
+
+        function randomExample() {
+            const ex = EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)];
+            str1 = ex.s1;
+            str2 = ex.s2;
+        }
+
+        function init(newExample) {
+            if (newExample || !str1) randomExample();
+            built = simulate(str1, str2);
+            stepIndex = 0;
+            playing = false;
+            clearInterval(timer);
+            updatePlayBtn();
+            buildTreeSVG(built);
+            buildTableDOM(built);
+            // buildShelf();
+            render();
+        }
+
+        // function buildShelf() {
+        //     const host = document.getElementById('stringChips');
+        //     host.innerHTML = '';
+        //     const chip1 = document.createElement('div');
+        //     chip1.className = 'chip';
+        //     chip1.innerHTML = `📄 str1 = "${str1}"`;
+        //     host.appendChild(chip1);
+        //     const chip2 = document.createElement('div');
+        //     chip2.className = 'chip';
+        //     chip2.innerHTML = `📄 str2 = "${str2}"`;
+        //     host.appendChild(chip2);
+        // }
+
+        function render() {
+            const step = built.steps[stepIndex];
+            highlightCode(step.type);
+            document.getElementById('infoText').innerHTML = step.info;
+
+            const banner = document.getElementById('answerBanner');
+            if (step.type === 'final') {
+                banner.innerHTML =
+                    `Shortest Common Supersequence = "${built.result}" (length ${built.result.length})`;
+                banner.classList.add('show');
+            } else {
+                banner.classList.remove('show');
+            }
+
+            // Update string display
+            updateStringDisplay(step);
+
+            // nodes
+            document.querySelectorAll('.node-group').forEach(g => {
+                const id = Number(g.dataset.id);
+                const node = built.nodes[id];
+                const revealed = node.enterStep <= stepIndex;
+                g.classList.toggle('revealed', revealed);
+                if (!revealed) return;
+                const resolved = node.returnStep <= stepIndex;
+                g.classList.toggle('active', !resolved);
+                g.classList.toggle('valid', resolved && node.value !== null);
+                g.classList.toggle('invalid', resolved && node.value === null);
+                g.classList.toggle('memo', node.status === 'memo-hit');
+                g.classList.toggle('current', id === step.id);
+                const valEl = g.querySelector('[data-role="value"]');
+                if (resolved && node.value !== null) {
+                    valEl.textContent = `→ "${node.value}"`;
+                } else if (resolved) {
+                    valEl.textContent = '→ ∞';
+                } else {
+                    valEl.textContent = '';
+                }
+            });
+
+            document.querySelectorAll('.edge, .edge-label').forEach(el => {
+                const id = Number(el.dataset.id);
+                if (!id) return;
+                const node = built.nodes[id];
+                if (!node) return;
+                el.classList.toggle('revealed', node.enterStep <= stepIndex);
+                el.classList.toggle('hot', id === step.id && node.returnStep > stepIndex);
+            });
+
+            // DP table
+            document.querySelectorAll('table.dp td').forEach(td => {
+                const i = Number(td.dataset.i),
+                    j = Number(td.dataset.j);
+                td.classList.remove('current-target', 'stamp');
+                let val = null;
+                for (let k = 0; k <= stepIndex; k++) {
+                    const s = built.steps[k];
+                    if ((s.type === 'store' || s.type === 'match-return' || s.type === 'base-i' || s.type ===
+                            'base-j') && s.i === i && s.j === j) {
+                        val = s.val || s.value || s.opt1 || null;
+                    }
+                    if (s.type === 'return' && s.id) {
+                        const n = built.nodes[s.id];
+                        if (n && n.i === i && n.j === j) val = s.value;
+                    }
+                }
+                if (!val && stepIndex >= built.steps.length - 1) {
+                    val = built.dp[i]?.[j] || null;
+                }
+                if (val) {
+                    td.textContent = `"${val}"`;
+                    td.className = 'filled valid';
+                    if (built.steps[stepIndex].i === i && built.steps[stepIndex].j === j &&
+                        (built.steps[stepIndex].type === 'store' || built.steps[stepIndex].type === 'match-return' ||
+                            built.steps[stepIndex].type === 'base-i' || built.steps[stepIndex].type === 'base-j')) {
+                        td.classList.add('stamp');
+                    }
+                } else {
+                    td.textContent = '·';
+                    td.className = '';
+                }
+                if (step.i === i && step.j === j) td.classList.add('current-target');
+            });
+
+            document.querySelectorAll('table.dp th.col-head').forEach(th => {
+                th.classList.toggle('active-col', Number(th.dataset.j) === step.j);
+            });
+            document.querySelectorAll('table.dp th.row-head').forEach(th => {
+                th.classList.toggle('active-row', Number(th.dataset.i) === step.i);
+            });
+
+            document.getElementById('progressText').textContent = `Step ${stepIndex} / ${built.steps.length-1}`;
+            document.getElementById('stepBackBtn').disabled = stepIndex === 0;
+            document.getElementById('stepFwdBtn').disabled = stepIndex === built.steps.length - 1;
+        }
+
+        // ─── CONTROLS ──────────────────────────────────────────────────
+        function updatePlayBtn() { document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Play'; }
+
+        function stepForward() { if (stepIndex < built.steps.length - 1) { stepIndex++;
+                render(); } else { stop(); } }
+        function stepToLast() { if (stepIndex < built.steps.length - 1) { stepIndex = built.steps.length - 1;
+                render(); } else { stop(); } }
+
+        function stepBack() { if (stepIndex > 0) { stepIndex--;
+                render(); } }
+
+        function stop() { playing = false;
+            clearInterval(timer);
+            updatePlayBtn(); }
+
+        function play() {
+            if (stepIndex >= built.steps.length - 1) stepIndex = 0;
+            playing = true;
+            updatePlayBtn();
+            const speed = Number(document.getElementById('speedSlider').value);
+            clearInterval(timer);
+            timer = setInterval(() => {
+                if (stepIndex >= built.steps.length - 1) { stop();
+                    render(); return; }
+                stepForward();
+            }, speed);
+        }
+
+        document.getElementById('playBtn').addEventListener('click', () => playing ? stop() : play());
+        document.getElementById('stepFwdBtn').addEventListener('click', () => { stop();
+            stepForward(); });
+        document.getElementById('stepBackBtn').addEventListener('click', () => { stop();
+            stepBack(); });
+        document.getElementById('stepToLast').addEventListener('click', () => { stop();
+            stepToLast(); });
+        document.getElementById('resetBtn').addEventListener('click', () => { stop();
+            stepIndex = 0;
+            render(); });
+        document.getElementById('newExampleBtn').addEventListener('click', () => init(true));
+        document.getElementById('speedSlider').addEventListener('input', () => { if (playing) play(); });
+
+        init(false);
+    </script>
+</body>
+</html>

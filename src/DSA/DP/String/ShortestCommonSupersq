@@ -1,0 +1,82 @@
+1092. Shortest Common Supersequence 
+
+//Brute Concept :- dfs(pick notpick) TC:- (N*M)  SC:- (N*M*s), Animation:- SuperSeq2String.html
+private String dfs(String str1, String str2, int i, int j, String[][] dp) { //start from i j = 0
+    // Base cases: if one string is exhausted, append the rest of the other
+    if (i == str1.length()) return str2.substring(j);
+    if (j == str2.length()) return str1.substring(i);
+    
+    if(dp[i][j] != null) return dp[i][j]; //dp[i][j] is a string, By default its null
+
+    // If characters match, include it once
+    if (str1.charAt(i) == str2.charAt(j)) {
+        dp[i][j] = str1.charAt(i) + dfs(str1, str2, i + 1, j + 1, dp);
+        return dp[i][j];
+    }
+    
+    String option1 = str1.charAt(i) + dfs(str1, str2, i + 1, j, dp);
+    String option2 = str2.charAt(j) + dfs(str1, str2, i, j + 1, dp);
+    
+    dp[i][j] = option1.length() <= option2.length() ? option1 : option2;
+    return dp[i][j];
+}
+
+//Tabulation :- Animation exist ShortestCommonSupersq.html
+class Solution {
+    public String reverse(char[] s){
+        int l = 0;
+        int r = s.length - 1;        
+        while(l < r){
+            char t = s[l];
+            s[l] = s[r];
+            s[r] = t;
+            l++;
+            r--;
+        }
+        return new String(s);
+    }
+    public String shortestCommonSupersequence(String str1, String str2) {
+        int n = str1.length();
+        int m = str2.length();
+        StringBuilder sb = new StringBuilder();
+        int[][] dp = new int[n+1][m+1];
+        int max = 0;
+        for(int i = 1; i <= n; i++){
+            for(int j = 1; j <= m; j++){
+                if(str1.charAt(i-1) == str2.charAt(j-1)){
+                    dp[i][j] = 1 + dp[i-1][j-1];
+                    max = Math.max(max, dp[i][j]);
+                }else{
+                    dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                }
+            }
+        }
+
+        int i = n;
+        int j = m;
+
+        while(i > 0 && j > 0){
+            if(str1.charAt(i-1) == str2.charAt(j-1)){
+                sb.append(String.valueOf(str1.charAt(i-1)));
+                i--;
+                j--;
+            }else if(dp[i-1][j] > dp[i][j-1]){
+                sb.append(str1.charAt(i-1));
+                i--;
+            }else{
+                sb.append(str2.charAt(j-1));
+                j--;
+            }
+        }
+        while(i > 0){
+            sb.append(str1.charAt(i-1));
+            i--;
+        }
+        while(j > 0){
+            sb.append(str2.charAt(j-1));
+            j--;
+        }
+        String ans = reverse(sb.toString().toCharArray());
+        return ans;        
+    }
+}

@@ -1,0 +1,30 @@
+583. Delete Operation for Two Strings
+
+//Intution:- LCS Algo + Logic how many el to remove from s1 + how many el to remove from s2
+
+//Tabulation:- LC code submission
+//Space Opt:- SC:- O(M+1) TC:- O(M*N)
+class Solution {
+    public int minDistance(String word1, String word2) {
+        int n = word1.length();
+        int m = word2.length();
+        int[] dp = new int[m+1];
+        int lcs = 0;
+        for(int i = 1; i <= n; i++){
+            int prevDiag = 0;
+            for(int j = 1; j <= m; j++){
+                int temp = dp[j];
+                if(word1.charAt(i-1) == word2.charAt(j-1)){
+                    dp[j] = 1 + prevDiag;
+                    lcs = Math.max(lcs, dp[j]);
+                }else{
+                    dp[j] = Math.max(dp[j], dp[j-1]);
+                }
+                prevDiag = temp;
+            }
+        }
+        int remEl1 = n - lcs;
+        int remEl2 = m - lcs;
+        return remEl1 + remEl2;
+    }
+}

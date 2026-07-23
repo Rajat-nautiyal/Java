@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shortest Common Supersequence – Animation</title>
+    <style>
+        /* --- Reset & Base --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 20px;
+        }
+
+        /* --- Top Controls Bar (Sticky) --- */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+
+        .top-bar .title {
+            font-weight: 600;
+            font-size: 18px;
+            color: #1e293b;
+        }
+        .top-bar .title span {
+            color: #8b5cf6;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls button:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .controls button:active {
+            transform: translateY(0px);
+        }
+
+        .controls button.primary {
+            background: #8b5cf6;
+            border-color: #8b5cf6;
+            color: white;
+        }
+
+        .controls button.primary:hover {
+            background: #7c3aed;
+            border-color: #7c3aed;
+        }
+
+        .controls button.primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .controls button.primary.playing {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .controls button.primary.playing:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+        }
+
+        .controls .speed-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 8px;
+            padding-left: 16px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .controls .speed-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .controls .speed-group input[type="range"] {
+            width: 100px;
+            accent-color: #8b5cf6;
+            cursor: pointer;
+        }
+
+        /* --- Input / Example Bar --- */
+        .input-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .input-bar .field {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .input-bar .field input {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            transition: border 0.2s;
+            width: 120px;
+            letter-spacing: 1px;
+        }
+
+        .input-bar .field input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .input-bar .presets {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-left: 8px;
+            padding-left: 16px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .input-bar .presets span {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+
+        .input-bar .presets button {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .input-bar .presets button:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+
+        .input-bar .presets button.active {
+            background: #8b5cf6;
+            color: white;
+            border-color: #8b5cf6;
+        }
+
+        .input-bar .build-btn {
+            background: #8b5cf6;
+            border: none;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 4px;
+        }
+
+        .input-bar .build-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(139, 92, 246, 0.25);
+        }
+
+        /* --- 3-Column Layout --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+
+        /* --- Common Panel Styles --- */
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+
+        /* --- LEFT: Algorithm Steps --- */
+        .algo-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #1e293b;
+        }
+
+        .algo-box .step {
+            padding: 8px 12px;
+            margin: 6px 0;
+            border-radius: 8px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .algo-box .step.active {
+            background: #ede9fe;
+            border-left-color: #8b5cf6;
+            font-weight: 500;
+        }
+
+        .algo-box .step .phase-label {
+            font-weight: 600;
+            color: #8b5cf6;
+            margin-right: 8px;
+        }
+
+        .algo-box .step .desc {
+            color: #334155;
+        }
+
+        /* --- CENTER: Visualization --- */
+        .vis-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .strings {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            padding: 8px 0;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 12px 16px;
+        }
+
+        .strings .string-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .strings .string-group .label {
+            color: #64748b;
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        .strings .char {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            font-weight: 600;
+            font-size: 16px;
+            min-width: 32px;
+            text-align: center;
+            transition: all 0.25s ease;
+            color: #1e293b;
+        }
+
+        .strings .char.active {
+            background: #facc15;
+            color: #0f172a;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(250, 204, 21, 0.4);
+        }
+
+        .strings .char.picked {
+            background: #a78bfa;
+            color: white;
+            box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .strings .char.picked-final {
+            background: #34d399;
+            color: #0f172a;
+            box-shadow: 0 4px 8px rgba(52, 211, 153, 0.4);
+        }
+
+        .table-wrap {
+            overflow: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+        }
+
+        table#dpTable {
+            border-collapse: collapse;
+            background: white;
+            font-size: 15px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        table#dpTable th,
+        table#dpTable td {
+            width: 48px;
+            height: 48px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            font-weight: 500;
+            color: #1e293b;
+            transition: background 0.2s ease;
+        }
+
+        table#dpTable th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        table#dpTable th.header-special {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        table#dpTable .current {
+            background: #22c55e;
+            color: white;
+            font-weight: 700;
+            border-color: #16a34a;
+            box-shadow: 0 0 0 2px #16a34a;
+        }
+
+        table#dpTable .top {
+            background: #93c5fd;
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+
+        table#dpTable .left {
+            background: #fcd34d;
+            color: #78350f;
+            font-weight: 600;
+        }
+
+        table#dpTable .diag {
+            background: #f472b6;
+            color: white;
+            font-weight: 600;
+        }
+
+        table#dpTable .path-cell {
+            background: #a78bfa;
+            color: white;
+            font-weight: 700;
+            border-color: #7c3aed;
+        }
+
+        table#dpTable .path-cell-next {
+            background: #7c3aed;
+            color: white;
+            font-weight: 700;
+            border-color: #5b21b6;
+            box-shadow: 0 0 0 2px #5b21b6;
+        }
+
+        table#dpTable .done-cell {
+            background: #34d399;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .result-box .label {
+            font-weight: 400;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .result-box .scs-value {
+            color: #8b5cf6;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .result-box .scs-string {
+            background: #ede9fe;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #5b21b6;
+            font-size: 18px;
+        }
+
+        .result-box .scs-string .char-highlight {
+            color: #db2777;
+            font-weight: 700;
+        }
+
+        /* --- RIGHT: Explanation Panel --- */
+        .explanation-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .explanation-box .step-message {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px 18px;
+            border-left: 4px solid #8b5cf6;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #1e293b;
+            flex: 1;
+        }
+
+        .explanation-box .step-message strong {
+            color: #0f172a;
+        }
+
+        .explanation-box .meta-info {
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 13px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 14px;
+        }
+
+        .explanation-box .values-used {
+            font-size: 14px;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .explanation-box .values-used span {
+            font-weight: 500;
+            padding: 2px 10px;
+            border-radius: 4px;
+        }
+
+        .explanation-box .values-used .top-val {
+            background: #93c5fd;
+        }
+        .explanation-box .values-used .left-val {
+            background: #fcd34d;
+        }
+        .explanation-box .values-used .diag-val {
+            background: #f472b6;
+        }
+        .explanation-box .values-used .new-val {
+            background: #a78bfa;
+            color: white;
+        }
+
+        .partial-scs-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 15px;
+            border: 1px solid #e2e8f0;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .partial-scs-box .ps-label {
+            font-weight: 400;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .partial-scs-box .ps-char {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #ede9fe;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #5b21b6;
+            font-size: 16px;
+        }
+
+        .partial-scs-box .ps-char.just-picked {
+            background: #a78bfa;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            .grid-container .panel:last-child {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            .grid-container .panel:last-child {
+                grid-column: span 1;
+            }
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .controls {
+                justify-content: center;
+            }
+            .controls .speed-group {
+                border-left: none;
+                padding-left: 0;
+            }
+            .strings {
+                gap: 20px;
+            }
+            .input-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .input-bar .presets {
+                border-left: none;
+                padding-left: 0;
+                margin-left: 0;
+                justify-content: center;
+            }
+            .input-bar .field {
+                justify-content: center;
+            }
+            .input-bar .build-btn {
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===================== TOP BAR ===================== -->
+    <div class="top-bar">
+        <div class="title">🧬 Shortest Common <span>Supersequence</span></div>
+        <div class="controls">
+            <button onclick="prevStep()" id="prevBtn">◀ Prev</button>
+            <button onclick="togglePlay()" id="playBtn" class="primary">▶ Play</button>
+            <button onclick="nextStep()" id="nextBtn">Next ▶</button>
+
+            <div class="speed-group">
+                <label for="speedSlider">Speed</label>
+                <input type="range" id="speedSlider" min="300" max="2000" value="900" step="50" />
+                <span id="speedLabel">900ms</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== INPUT BAR ===================== -->
+    <div class="input-bar">
+        <div class="field">
+            <span>s1:</span>
+            <input type="text" id="inputText1" value="brute" maxlength="8" />
+        </div>
+        <div class="field">
+            <span>s2:</span>
+            <input type="text" id="inputText2" value="groot" maxlength="8" />
+        </div>
+        <button class="build-btn" onclick="buildFromInput()">⟳ Build</button>
+
+        <div class="presets">
+            <span>Examples:</span>
+            <button data-s1="brute" data-s2="groot" class="active">brute / groot</button>
+            <button data-s1="abc" data-s2="acb">abc / acb</button>
+            <button data-s1="AGGTAB" data-s2="GXTXAYB">AGGTAB / GXTXAYB</button>
+            <button data-s1="geek" data-s2="eke">geek / eke</button>
+            <button data-s1="abac" data-s2="cab">abac / cab</button>
+        </div>
+    </div>
+
+    <!-- ===================== 3-COLUMN GRID ===================== -->
+    <div class="grid-container">
+
+        <!-- LEFT: Algorithm steps -->
+        <div class="panel" style="padding:0; background:transparent; border:none; box-shadow:none;">
+            <div class="algo-box" id="algoSteps">
+                <!-- Will be filled dynamically -->
+            </div>
+        </div>
+
+        <!-- CENTER: Visualization -->
+        <div class="panel">
+            <div class="vis-container">
+
+                <!-- Strings -->
+                <div class="strings">
+                    <div class="string-group">
+                        <span class="label">s1:</span>
+                        <span id="text1Chars"></span>
+                    </div>
+                    <div class="string-group">
+                        <span class="label">s2:</span>
+                        <span id="text2Chars"></span>
+                    </div>
+                </div>
+
+                <!-- DP Table -->
+                <div class="table-wrap">
+                    <table id="dpTable"></table>
+                </div>
+
+                <!-- Partial SCS Display (during backtracking) -->
+                <div class="partial-scs-box" id="partialScsBox">
+                    <span class="ps-label">📝 Building SCS:</span>
+                    <span id="partialScsContent" style="font-weight:600;color:#1e293b;">—</span>
+                </div>
+
+                <!-- Result -->
+                <div class="result-box">
+                    <span class="label">📌 SCS length:</span>
+                    <span class="scs-value" id="scsLen">—</span>
+                    <span class="label" style="margin-left:4px;">Supersequence:</span>
+                    <span class="scs-string" id="scsStr">—</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RIGHT: Explanation -->
+        <div class="panel">
+            <div class="explanation-box">
+                <h3>🔍 Step Details</h3>
+                <div class="step-message" id="info">
+                    Click <strong>Play</strong> or <strong>Next</strong> to start the SCS walkthrough.
+                </div>
+                <div class="values-used" id="valuesUsed">
+                    <span class="top-val">top: —</span>
+                    <span class="left-val">left: —</span>
+                    <span class="diag-val">diag: —</span>
+                    <span class="new-val">new: —</span>
+                </div>
+                <div class="meta-info">
+                    <span id="stepCounter">Step 0 / 0</span>
+                    <span id="phaseIndicator">Phase: -</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- JavaScript                                                   -->
+    <!-- ============================================================ -->
+    <script>
+        // ------------------------------------------------------------
+        //  1. Step Generation
+        // ------------------------------------------------------------
+
+        let currentS1 = "brute";
+        let currentS2 = "groot";
+        let steps = [];
+        let currentStep = 0;
+        let playInterval = null;
+        let isPlaying = false;
+
+        function buildSteps(s1, s2) {
+            currentS1 = s1;
+            currentS2 = s2;
+            const n = s1.length;
+            const m = s2.length;
+
+            // dp table
+            const dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+            const newSteps = [];
+
+            // --- Phase 1: Fill DP ---
+            for (let i = 1; i <= n; i++) {
+                for (let j = 1; j <= m; j++) {
+                    const match = (s1[i - 1] === s2[j - 1]);
+                    let val;
+                    if (match) {
+                        val = 1 + dp[i - 1][j - 1];
+                    } else {
+                        val = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                    }
+                    dp[i][j] = val;
+
+                    newSteps.push({
+                        phase: "fill",
+                        i,
+                        j,
+                        match,
+                        top: dp[i - 1][j],
+                        left: dp[i][j - 1],
+                        diag: dp[i - 1][j - 1],
+                        newVal: val,
+                        dpSnapshot: dp.map(row => [...row]),
+                        message: match ?
+                            `✅ Match: '${s1[i-1]}' == '${s2[j-1]}' → dp[${i}][${j}] = 1 + diag(${dp[i-1][j-1]}) = ${val}` :
+                            `❌ No match: max(top(${dp[i-1][j]}), left(${dp[i][j-1]})) = ${val}`,
+                        scs: null,
+                        pickedChar: null,
+                        partialSCS: null,
+                        pathCells: null
+                    });
+                }
+            }
+
+            // --- Phase 2: Backtracking ---
+            let i = n,
+                j = m;
+            const scsChars = []; // collected in reverse order
+            const pathCells = []; // track path cells
+
+            while (i > 0 && j > 0) {
+                pathCells.push([i, j]);
+                if (s1[i - 1] === s2[j - 1]) {
+                    scsChars.push(s1[i - 1]);
+                    const partial = [...scsChars].reverse().join('');
+                    newSteps.push({
+                        phase: "backtrack",
+                        i,
+                        j,
+                        match: true,
+                        top: dp[i - 1][j],
+                        left: dp[i][j - 1],
+                        diag: dp[i - 1][j - 1],
+                        newVal: null,
+                        dpSnapshot: dp.map(row => [...row]),
+                        message: `🔗 Match: add '${s1[i-1]}' → move diagonally to (${i-1},${j-1})`,
+                        scs: null,
+                        pickedChar: s1[i - 1],
+                        partialSCS: partial,
+                        pathCells: [...pathCells],
+                        nextI: i - 1,
+                        nextJ: j - 1
+                    });
+                    i--;
+                    j--;
+                } else if (dp[i - 1][j] > dp[i][j - 1]) {
+                    scsChars.push(s1[i - 1]);
+                    const partial = [...scsChars].reverse().join('');
+                    newSteps.push({
+                        phase: "backtrack",
+                        i,
+                        j,
+                        match: false,
+                        top: dp[i - 1][j],
+                        left: dp[i][j - 1],
+                        diag: dp[i - 1][j - 1],
+                        newVal: null,
+                        dpSnapshot: dp.map(row => [...row]),
+                        message: `⬆️ Move up (top ${dp[i-1][j]} > left ${dp[i][j-1]}): add '${s1[i-1]}' → i--`,
+                        scs: null,
+                        pickedChar: s1[i - 1],
+                        partialSCS: partial,
+                        pathCells: [...pathCells],
+                        nextI: i - 1,
+                        nextJ: j
+                    });
+                    i--;
+                } else {
+                    scsChars.push(s2[j - 1]);
+                    const partial = [...scsChars].reverse().join('');
+                    newSteps.push({
+                        phase: "backtrack",
+                        i,
+                        j,
+                        match: false,
+                        top: dp[i - 1][j],
+                        left: dp[i][j - 1],
+                        diag: dp[i - 1][j - 1],
+                        newVal: null,
+                        dpSnapshot: dp.map(row => [...row]),
+                        message: `⬅️ Move left (left ${dp[i][j-1]} >= top ${dp[i-1][j]}): add '${s2[j-1]}' → j--`,
+                        scs: null,
+                        pickedChar: s2[j - 1],
+                        partialSCS: partial,
+                        pathCells: [...pathCells],
+                        nextI: i,
+                        nextJ: j - 1
+                    });
+                    j--;
+                }
+            }
+
+            // Append remaining from s1
+            while (i > 0) {
+                pathCells.push([i, j]);
+                scsChars.push(s1[i - 1]);
+                const partial = [...scsChars].reverse().join('');
+                newSteps.push({
+                    phase: "backtrack",
+                    i,
+                    j,
+                    match: false,
+                    top: 0,
+                    left: 0,
+                    diag: 0,
+                    newVal: null,
+                    dpSnapshot: dp.map(row => [...row]),
+                    message: `⬆️ Remaining from s1: add '${s1[i-1]}' → i--`,
+                    scs: null,
+                    pickedChar: s1[i - 1],
+                    partialSCS: partial,
+                    pathCells: [...pathCells],
+                    nextI: i - 1,
+                    nextJ: j
+                });
+                i--;
+            }
+
+            while (j > 0) {
+                pathCells.push([i, j]);
+                scsChars.push(s2[j - 1]);
+                const partial = [...scsChars].reverse().join('');
+                newSteps.push({
+                    phase: "backtrack",
+                    i,
+                    j,
+                    match: false,
+                    top: 0,
+                    left: 0,
+                    diag: 0,
+                    newVal: null,
+                    dpSnapshot: dp.map(row => [...row]),
+                    message: `⬅️ Remaining from s2: add '${s2[j-1]}' → j--`,
+                    scs: null,
+                    pickedChar: s2[j - 1],
+                    partialSCS: partial,
+                    pathCells: [...pathCells],
+                    nextI: i,
+                    nextJ: j - 1
+                });
+                j--;
+            }
+
+            // Final result
+            const scsResult = scsChars.reverse().join('');
+            const scsLen = scsResult.length;
+
+            newSteps.push({
+                phase: "done",
+                i: 0,
+                j: 0,
+                match: false,
+                top: 0,
+                left: 0,
+                diag: 0,
+                newVal: null,
+                dpSnapshot: dp.map(row => [...row]),
+                message: `🎉 Shortest Common Supersequence: "${scsResult}" (length ${scsLen})`,
+                scs: scsResult,
+                pickedChar: null,
+                partialSCS: scsResult,
+                pathCells: pathCells,
+                nextI: null,
+                nextJ: null
+            });
+
+            return newSteps;
+        }
+
+        // ------------------------------------------------------------
+        //  2. Rendering
+        // ------------------------------------------------------------
+
+        function render() {
+            if (!steps || steps.length === 0) return;
+            const step = steps[currentStep] || steps[0];
+            const total = steps.length;
+            const s1 = currentS1;
+            const s2 = currentS2;
+            const n = s1.length;
+            const m = s2.length;
+
+            // --- Strings ---
+            // For s1: highlight i-1 if in fill phase, or picked chars during backtrack
+            document.getElementById("text1Chars").innerHTML = s1
+                .split("")
+                .map((char, idx) => {
+                    let cls = "char";
+                    const idxPos = idx + 1;
+                    // Active: current i
+                    if (step.phase === "fill" && idxPos === step.i) cls += " active";
+                    if (step.phase === "backtrack") {
+                        // Highlight the char being picked
+                        if (step.pickedChar === char && idxPos === step.i) {
+                            cls += " picked";
+                        }
+                        // Also highlight previously picked chars (in the path)
+                        if (step.pathCells && step.pathCells.some(([r, c]) => r === idxPos && c > 0 && c <= m)) {
+                            // Check if this char is part of the SCS path
+                            // We'll use a different highlight for path chars that were picked
+                            // But we already have 'picked' for the current one
+                        }
+                    }
+                    if (step.phase === "done") {
+                        // Show which chars are in the final SCS - we can highlight all that are in the path
+                        if (step.pathCells && step.pathCells.some(([r, c]) => r === idxPos && c > 0 && c <= m)) {
+                            cls += " picked-final";
+                        }
+                    }
+                    return `<span class="${cls}">${char}</span>`;
+                })
+                .join("");
+
+            document.getElementById("text2Chars").innerHTML = s2
+                .split("")
+                .map((char, idx) => {
+                    let cls = "char";
+                    const idxPos = idx + 1;
+                    if (step.phase === "fill" && idxPos === step.j) cls += " active";
+                    if (step.phase === "backtrack") {
+                        if (step.pickedChar === char && idxPos === step.j) {
+                            cls += " picked";
+                        }
+                    }
+                    if (step.phase === "done") {
+                        if (step.pathCells && step.pathCells.some(([r, c]) => c === idxPos && r > 0 && r <= n)) {
+                            cls += " picked-final";
+                        }
+                    }
+                    return `<span class="${cls}">${char}</span>`;
+                })
+                .join("");
+
+            // --- DP Table ---
+            const table = document.getElementById("dpTable");
+            const dp = step.dpSnapshot || [];
+            let html = "<tr><th></th><th style='background:#ede9fe;color:#5b21b6;'>-</th>";
+            for (const char of s2) html += `<th style='background:#ede9fe;color:#5b21b6;'>${char}</th>`;
+            html += "</tr>";
+
+            // Build a set of path cells for quick lookup
+            const pathSet = new Set();
+            if (step.pathCells) {
+                for (const [r, c] of step.pathCells) {
+                    pathSet.add(r + ',' + c);
+                }
+            }
+
+            for (let row = 0; row <= n; row++) {
+                const label = row === 0 ? "-" : s1[row - 1];
+                const isRowLabelSpecial = row > 0;
+                html += `<tr><th style='${isRowLabelSpecial ? "background:#ede9fe;color:#5b21b6;" : ""}'>${label}</th>`;
+                for (let col = 0; col <= m; col++) {
+                    let className = "";
+                    const val = dp[row]?.[col] ?? 0;
+
+                    // Current cell (green) - only in fill and backtrack phases
+                    if (row === step.i && col === step.j && step.phase !== "done") {
+                        className += " current";
+                    }
+
+                    // Fill phase coloring: conditional
+                    if (step.phase === "fill") {
+                        if (step.match) {
+                            // Only diagonal (pink) when match
+                            if (row === step.i - 1 && col === step.j - 1) {
+                                className += " diag";
+                            }
+                        } else {
+                            // Top (blue) and Left (yellow) when no match
+                            if (row === step.i - 1 && col === step.j) {
+                                className += " top";
+                            }
+                            if (row === step.i && col === step.j - 1) {
+                                className += " left";
+                            }
+                        }
+                    }
+
+                    // Backtracking phase: highlight path
+                    if (step.phase === "backtrack" || step.phase === "done") {
+                        // Highlight the next cell we're moving to
+                        if (step.nextI !== undefined && step.nextI !== null &&
+                            step.nextJ !== undefined && step.nextJ !== null &&
+                            row === step.nextI && col === step.nextJ) {
+                            className += " path-cell-next";
+                        }
+                        // Highlight path cells (previously visited)
+                        if (pathSet.has(row + ',' + col)) {
+                            // Don't override the current cell or next cell
+                            if (!(row === step.i && col === step.j) &&
+                                !(row === step.nextI && col === step.nextJ)) {
+                                className += " path-cell";
+                            }
+                        }
+                        // In done phase, highlight the entire path
+                        if (step.phase === "done" && pathSet.has(row + ',' + col)) {
+                            className += " done-cell";
+                        }
+                    }
+
+                    html += `<td class="${className}">${val}</td>`;
+                }
+                html += "</tr>";
+            }
+            table.innerHTML = html;
+
+            // --- Values used ---
+            const topVal = step.top !== undefined && step.top !== null ? step.top : '—';
+            const leftVal = step.left !== undefined && step.left !== null ? step.left : '—';
+            const diagVal = step.diag !== undefined && step.diag !== null ? step.diag : '—';
+            const newVal = step.newVal !== undefined && step.newVal !== null ? step.newVal : '—';
+            document.getElementById("valuesUsed").innerHTML = `
+                <span class="top-val">top: ${topVal}</span>
+                <span class="left-val">left: ${leftVal}</span>
+                <span class="diag-val">diag: ${diagVal}</span>
+                <span class="new-val">new: ${newVal}</span>
+            `;
+
+            // --- Partial SCS (during backtracking) ---
+            const partialBox = document.getElementById("partialScsContent");
+            if (step.phase === "backtrack" && step.partialSCS) {
+                const chars = step.partialSCS.split('');
+                const lastChar = chars[chars.length - 1] || '';
+                let html2 = '';
+                for (let k = 0; k < chars.length; k++) {
+                    const isLast = (k === chars.length - 1);
+                    html2 += `<span class="ps-char ${isLast ? 'just-picked' : ''}">${chars[k]}</span>`;
+                }
+                partialBox.innerHTML = html2;
+            } else if (step.phase === "done" && step.scs) {
+                const chars = step.scs.split('');
+                let html2 = '';
+                for (const ch of chars) {
+                    html2 += `<span class="ps-char" style="background:#34d399;color:#0f172a;">${ch}</span>`;
+                }
+                partialBox.innerHTML = html2;
+            } else {
+                partialBox.textContent = '—';
+            }
+
+            // --- Result ---
+            let scsStr = step.scs || '';
+            let scsLen = scsStr.length;
+            if (step.phase === "done") {
+                document.getElementById("scsLen").textContent = scsLen;
+                document.getElementById("scsStr").textContent = scsStr;
+            } else {
+                const lcs = dp[n]?.[m] || 0;
+                const scsLength = n + m - lcs;
+                document.getElementById("scsLen").textContent = scsLength;
+                document.getElementById("scsStr").textContent = step.phase === "backtrack" ? (step.partialSCS || '...') : '...';
+            }
+
+            // --- Explanation ---
+            document.getElementById("info").innerHTML = step.message || "Ready.";
+
+            // --- Meta ---
+            document.getElementById("stepCounter").textContent = `Step ${currentStep + 1} / ${total}`;
+            let phaseLabel = step.phase === "fill" ? "🛠️ Filling DP" :
+                step.phase === "backtrack" ? "🔍 Backtracking" :
+                step.phase === "done" ? "✅ Complete" : "-";
+            document.getElementById("phaseIndicator").textContent = `Phase: ${phaseLabel}`;
+
+            // --- Algorithm Steps (Left panel) ---
+            renderAlgoSteps(step.phase);
+
+            // Buttons
+            document.getElementById("prevBtn").disabled = (currentStep === 0);
+            document.getElementById("nextBtn").disabled = (currentStep === total - 1);
+        }
+
+        // ------------------------------------------------------------
+        //  3. Algorithm Steps (Left Panel)
+        // ------------------------------------------------------------
+
+        function renderAlgoSteps(currentPhase) {
+            const container = document.getElementById("algoSteps");
+            const stepsList = [
+                { id: 's1', label: 'Step 1', desc: 'Build DP using LCS (bottom‑up)', phase: 'fill' },
+                { id: 's2', label: '•', desc: 'If chars match: dp[i][j] = 1 + dp[i-1][j-1]', phase: 'fill' },
+                { id: 's3', label: '•', desc: 'If no match: dp[i][j] = max(dp[i-1][j], dp[i][j-1])', phase: 'fill' },
+                { id: 's4', label: 'Step 2', desc: 'Backtrack from bottom‑right to build SCS', phase: 'backtrack' },
+                { id: 's5', label: '•', desc: 'If chars match → add char, move diagonally', phase: 'backtrack' },
+                { id: 's6', label: '•', desc: 'If top > left → add s1 char, move up', phase: 'backtrack' },
+                { id: 's7', label: '•', desc: 'Else → add s2 char, move left', phase: 'backtrack' },
+                { id: 's8', label: 'Step 3', desc: 'Append remaining chars from s1 & s2', phase: 'backtrack' },
+                { id: 's9', label: 'Step 4', desc: 'Reverse collected chars → final SCS', phase: 'done' }
+            ];
+
+            let activeIds = [];
+            if (currentPhase === 'fill') activeIds = ['s1', 's2', 's3'];
+            else if (currentPhase === 'backtrack') activeIds = ['s4', 's5', 's6', 's7', 's8'];
+            else if (currentPhase === 'done') activeIds = ['s9'];
+
+            let html = '';
+            for (const st of stepsList) {
+                const active = activeIds.includes(st.id) ? 'active' : '';
+                html += `<div class="step ${active}">
+                            <span class="phase-label">${st.label}</span>
+                            <span class="desc">${st.desc}</span>
+                        </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // ------------------------------------------------------------
+        //  4. Controls
+        // ------------------------------------------------------------
+
+        function nextStep() {
+            if (!steps || steps.length === 0) return;
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                render();
+            } else {
+                if (isPlaying) togglePlay();
+            }
+        }
+
+        function prevStep() {
+            if (!steps || steps.length === 0) return;
+            if (isPlaying) togglePlay();
+            if (currentStep > 0) {
+                currentStep--;
+                render();
+            }
+        }
+
+        function togglePlay() {
+            const btn = document.getElementById("playBtn");
+
+            if (isPlaying) {
+                if (playInterval) {
+                    clearInterval(playInterval);
+                    playInterval = null;
+                }
+                isPlaying = false;
+                btn.textContent = "▶ Play";
+                btn.classList.remove("playing");
+            } else {
+                if (!steps || steps.length === 0) return;
+
+                if (currentStep >= steps.length - 1) {
+                    currentStep = 0;
+                    render();
+                }
+
+                isPlaying = true;
+                btn.textContent = "⏸ Pause";
+                btn.classList.add("playing");
+
+                const speed = parseInt(document.getElementById("speedSlider").value);
+                document.getElementById("speedLabel").textContent = speed + "ms";
+
+                playInterval = setInterval(() => {
+                    if (currentStep >= steps.length - 1) {
+                        togglePlay();
+                        return;
+                    }
+                    nextStep();
+                }, speed);
+            }
+        }
+
+        function resetAnimation() {
+            if (isPlaying) togglePlay();
+            currentStep = 0;
+            render();
+        }
+
+        function buildFromInput() {
+            if (isPlaying) togglePlay();
+            const t1 = document.getElementById("inputText1").value.trim() || "brute";
+            const t2 = document.getElementById("inputText2").value.trim() || "groot";
+            const maxLen = 8;
+            const s1 = t1.slice(0, maxLen);
+            const s2 = t2.slice(0, maxLen);
+            document.getElementById("inputText1").value = s1;
+            document.getElementById("inputText2").value = s2;
+
+            steps = buildSteps(s1, s2);
+            currentStep = 0;
+            render();
+
+            document.querySelectorAll(".presets button").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.s1 === s1 && btn.dataset.s2 === s2);
+            });
+        }
+
+        function loadPreset(s1, s2) {
+            document.getElementById("inputText1").value = s1;
+            document.getElementById("inputText2").value = s2;
+            buildFromInput();
+        }
+
+        // --- Speed slider ---
+        document.getElementById("speedSlider").addEventListener("input", function() {
+            document.getElementById("speedLabel").textContent = this.value + "ms";
+            if (isPlaying) {
+                togglePlay();
+                togglePlay();
+            }
+        });
+
+        // --- Preset buttons ---
+        document.querySelectorAll(".presets button").forEach(btn => {
+            btn.addEventListener("click", function() {
+                loadPreset(this.dataset.s1, this.dataset.s2);
+            });
+        });
+
+        // --- Keyboard shortcuts ---
+        document.addEventListener("keydown", (e) => {
+            if (e.target.tagName === "INPUT") return;
+            if (e.key === "ArrowRight") { e.preventDefault();
+                nextStep(); }
+            if (e.key === "ArrowLeft") { e.preventDefault();
+                prevStep(); }
+            if (e.key === " ") { e.preventDefault();
+                togglePlay(); }
+            if (e.key === "r" || e.key === "R") { resetAnimation(); }
+        });
+
+        // ------------------------------------------------------------
+        //  5. Initial Build
+        // ------------------------------------------------------------
+
+        steps = buildSteps("brute", "groot");
+        currentStep = 0;
+        render();
+        console.log("🧬 SCS Animation ready!");
+    </script>
+
+</body>
+</html>

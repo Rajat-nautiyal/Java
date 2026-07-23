@@ -1,0 +1,56 @@
+1312. Minimum Insertion Steps to Make a String Palindrome
+Intuition:- //Just reverse s rev(s) and then find LCS blw both string and return s.len - LCS len
+
+//Tabulation Approach
+class Solution {
+    public String reverse(char[] s){
+        int l = 0;
+        int r = s.length - 1;        
+        while(l < r){
+            char t = s[l];
+            s[l] = s[r];
+            s[r] = t;
+            l++;
+            r--;
+        }
+        return new String(s);
+    }
+    public int minInsertions(String s) {
+        String rev = reverse(s.toCharArray());
+        int n = s.length();        
+        int[][] dp = new int[n+1][n+1];
+        int lcs = 0;
+        for(int i = 1; i <= n; i++){
+            for(int j = 1; j <= n; j++){
+                if(s.charAt(i-1) == rev.charAt(j-1)){
+                    dp[i][j] = 1 + dp[i-1][j-1];
+                    lcs = Math.max(lcs, dp[i][j]);
+                }else{
+                    dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                }
+            }
+        }
+        return s.length() - lcs;
+    }
+}
+//space opt TC:- O(N*N) SC- O(N+1) Animation Exist
+    public int minInsertions(String s) {
+        String rev = reverse(s.toCharArray());
+        int n = s.length();        
+        int[] curr = new int[n+1];
+        int lcs = 0;
+        for(int i = 1; i <= n; i++){
+            int prevDiag = 0;
+            for(int j = 1; j <= n; j++){
+                int temp = curr[j];
+                if(s.charAt(i-1) == rev.charAt(j-1)){
+                    curr[j] = 1 + prevDiag;
+                    lcs = Math.max(lcs, curr[j]);
+                }else{
+                    curr[j] = Math.max(curr[j], curr[j-1]);
+                }
+                prevDiag = temp;
+            }
+        }
+        return s.length() - lcs;
+    }
